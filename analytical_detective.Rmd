@@ -23,4 +23,63 @@ Please download the file [mvtWeek1.csv]( https://d37djvu3ytnwxt.cloudfront.net/a
   * **ID**: a unique identifier for each observation  
   * **Date**: the date the crime occurred  
   * **LocationDescription**: the location where the crime occurred  
-  * **Arrest**: whether or not an arrest was made for the crime (TRUE if an arrest was made, and FALSE if an arrest was not made)  
+  * **Arrest**: whether or not an arrest was made for the crime (TRUE if an arrest was made, and FALSE if an arrest was not made)    
+  * **Domestic**: whether or not the crime was a domestic crime, meaning that it was committed against a family member (TRUE if it was domestic, and FALSE if it was not domestic)  
+  * **Beat**: the area, or "beat" in which the crime occurred. This is the smallest regional division defined by the Chicago police department.  
+  * **District**: the police district in which the crime occurred. Each district is composed of many beats, and are defined by the Chicago Police Department.  
+  * **CommunityArea**: the community area in which the crime occurred. Since the 1920s, Chicago has been divided into what are called "community areas", of which there are now 77. The community areas were devised in an attempt to create socially homogeneous regions.   
+  * **Year**: the year in which the crime occurred.  
+  * **Latitude**: the latitude of the location at which the crime occurred.  
+  * **Longitutde**: the longitude of the location at which the crime occurred.
+
+#### Loading the Data
+```{r}
+mvt <- read.csv("/Users/johnbobo/analytics_edge/data/mvtWeek1.csv")
+```
+
+**How many observations does our dataset hold?**
+```{r}
+nrow(mvt)
+```
+**How many variables are in this dataset?**
+```{r}
+ncol(mvt)
+```
+**What is the maximum values fo the variable "ID"?**
+```{r}
+max(mvt$ID)
+```
+**What is the minimum value of the variable "Beat"?**
+```{r}
+min(mvt$Beat)
+```
+**How many observations have value `TRUE` in the Arrest variable?**
+```{r}
+sum(mvt$Arrest)
+```
+**How many observations have a LocationDescription value of `ALLEY`?**
+```{r}
+sum(mvt$LocationDescription == 'ALLEY')
+```
+***
+#### Understanding Dates
+**In what format are the entries in the variable Date?**
+```{r}
+mvt$Date[1]
+```
+**Ans**: Month/Day/Year Hour:Minute
+
+Now, let's convert these characters into a Date object in R.
+```{r}
+DateConvert = as.Date(strptime(mvt$Date, "%m/%d/%y %H:%M"))
+```
+This converts the variable "Date" into a Date object in R. Let's look at the variable DateConvert using the summary function.
+```{r}
+summary(DateConvert)
+```
+**What is the month and year of the median date in our dataset?**
+**Ans**: May 2006
+
+Now, let's extract the month and the day of the week, and add these variables to our data frame mvt. We can do this with two simple functions.
+
+

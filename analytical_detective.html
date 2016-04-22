@@ -127,8 +127,49 @@ $(document).ready(function () {
 </li>
 <li><strong>LocationDescription</strong>: the location where the crime occurred<br />
 </li>
-<li><strong>Arrest</strong>: whether or not an arrest was made for the crime (TRUE if an arrest was made, and FALSE if an arrest was not made)</li>
+<li><strong>Arrest</strong>: whether or not an arrest was made for the crime (TRUE if an arrest was made, and FALSE if an arrest was not made)<br />
+</li>
+<li><strong>Domestic</strong>: whether or not the crime was a domestic crime, meaning that it was committed against a family member (TRUE if it was domestic, and FALSE if it was not domestic)<br />
+</li>
+<li><strong>Beat</strong>: the area, or “beat” in which the crime occurred. This is the smallest regional division defined by the Chicago police department.<br />
+</li>
+<li><strong>District</strong>: the police district in which the crime occurred. Each district is composed of many beats, and are defined by the Chicago Police Department.<br />
+</li>
+<li><strong>CommunityArea</strong>: the community area in which the crime occurred. Since the 1920s, Chicago has been divided into what are called “community areas”, of which there are now 77. The community areas were devised in an attempt to create socially homogeneous regions.<br />
+</li>
+<li><strong>Year</strong>: the year in which the crime occurred.<br />
+</li>
+<li><strong>Latitude</strong>: the latitude of the location at which the crime occurred.<br />
+</li>
+<li><strong>Longitutde</strong>: the longitude of the location at which the crime occurred.</li>
 </ul>
+<div id="loading-the-data" class="section level4">
+<h4>Loading the Data</h4>
+<pre class="r"><code>mvt &lt;- read.csv(&quot;/Users/johnbobo/analytics_edge/data/mvtWeek1.csv&quot;)</code></pre>
+<p><strong>How many observations does our dataset hold?</strong></p>
+<pre class="r"><code>nrow(mvt)</code></pre>
+<pre><code>## [1] 191641</code></pre>
+<p><strong>How many variables are in this dataset?</strong></p>
+<pre class="r"><code>ncol(mvt)</code></pre>
+<pre><code>## [1] 11</code></pre>
+<p><strong>What is the maximum values fo the variable “ID”?</strong></p>
+<pre class="r"><code>max(mvt$ID)</code></pre>
+<pre><code>## [1] 9181151</code></pre>
+<p><strong>What is the minimum value of the variable “Beat”?</strong></p>
+<pre class="r"><code>min(mvt$Beat)</code></pre>
+<pre><code>## [1] 111</code></pre>
+<p><strong>How many observations have value <code>TRUE</code> in the Arrest variable?</strong></p>
+<pre class="r"><code>sum(mvt$Arrest)</code></pre>
+<pre><code>## [1] 15536</code></pre>
+<p><strong>How many observations have a LocationDescription value of <code>ALLEY</code>?</strong></p>
+<pre class="r"><code>sum(mvt$LocationDescription == 'ALLEY')</code></pre>
+<pre><code>## [1] 2308</code></pre>
+<p><strong>In what format are the entries in the variable Date?</strong></p>
+<pre class="r"><code>mvt$Date[1]</code></pre>
+<pre><code>## [1] 12/31/12 23:15
+## 131680 Levels: 1/1/01 0:01 1/1/01 0:05 1/1/01 0:30 1/1/01 1:17 ... 9/9/12 9:50</code></pre>
+<p><strong>Ans</strong>: Month/Day/Year Hour:Minute</p>
+</div>
 
 
 
