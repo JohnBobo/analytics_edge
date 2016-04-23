@@ -1,14 +1,15 @@
 ---
 title: "Analytical Detective"
-author: "By John Bobo based on problem set from MIT's Analytics Edge MOOC" 
+author: "By John Bobo based on a problem set from MIT's Analytics Edge MOOC" 
 date: "April 21, 2016"
 output:
     html_document:
-        theme: spacelab
+        theme: cerulean
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
 ```
 
 
@@ -32,7 +33,7 @@ Please download the file [mvtWeek1.csv]( https://d37djvu3ytnwxt.cloudfront.net/a
   * **Latitude**: the latitude of the location at which the crime occurred.  
   * **Longitutde**: the longitude of the location at which the crime occurred.
 
-#### Loading the Data
+## Loading the Data
 ```{r}
 mvt <- read.csv("/Users/johnbobo/analytics_edge/data/mvtWeek1.csv")
 ```
@@ -62,7 +63,7 @@ sum(mvt$Arrest)
 sum(mvt$LocationDescription == 'ALLEY')
 ```
 ***
-#### Understanding Dates
+## Understanding Dates
 **In what format are the entries in the variable Date?**
 ```{r}
 mvt$Date[1]
@@ -77,9 +78,77 @@ This converts the variable "Date" into a Date object in R. Let's look at the var
 ```{r}
 summary(DateConvert)
 ```
-**What is the month and year of the median date in our dataset?**
+**What is the month and year of the median date in our dataset?**  
 **Ans**: May 2006
 
 Now, let's extract the month and the day of the week, and add these variables to our data frame mvt. We can do this with two simple functions.
+```{r}
+mvt$Month = months(DateConvert)
+mvt$Weekday = weekdays(DateConvert)
 
+# Replace the old Date variable
+mvt$Date = DateConvert
+```
+
+**In which month did the fewest motor vehicle thefts occur?**
+```{r}
+sort(table(mvt$Month))[1]
+```
+
+**On which weekday did the most motor vehicle thefts occur?**
+```{r}
+sort(table(mvt$Weekday), decreasing = TRUE)[1]
+```
+
+**Each observation in the dataset represents a motor vehicle theft, and the Arrest variable indicates whether an arrest was later made for this theft. Which month has the largest number of motor vehicle thefts for which an arrest was made?**
+```{r}
+sort(table(mvt$Month, mvt$Arrest)[,2], decreasing = TRUE)[1]
+```
+
+***
+
+## Visualizing Crime Trends
+
+Now, let's make some plots to help us better understand how crime has changed over time in Chicago. Throughout this problem, and in general, you can save your plot to a file. For more information, [this website](http://www.stat.berkeley.edu/~s133/saving.html) very clearly explains the process.
+
+First, let's make a histogram of the variable Date.
+
+```{r}
+plot <- ggplot(data = mvt, aes(x = Date)) +
+            geom_histogram(stat="bin", binwidth = 100, aes(fill=..count..)) +
+            scale_fill_gradient("Count", low = "green", high = "red") +
+            ggtitle("Chicago Crime over Time") +
+            ylab("Crimes")
+plot  
+```
+
+While there isn't a clear trend it appears crime decreases from 2002 - 2012 with an upward trend from 2009 - 2011.
+
+Now, let's see how arrests have changed over time. We'll create a boxplot of the variable "Date", sorted by the variable "Arrest". In a boxplot, the bold horizontal line is the median value of the data, the box shows the range of values between the first quartile and third quartile, and the whiskers (the dotted lines extending outside the box) show the minimum and maximum values, excluding any outliers (which are plotted as circles). Outliers are defined by first computing the difference between the first and third quartile values, or the height of the box. This number is called the Inter-Quartile Range (IQR). Any point that is greater than the third quartile plus the IQR or less than the first quartile minus the IQR is considered an outlier.
+
+```{r}
+plot <- ggplot(mvt, aes(x=Arrest, y=Date, fill=Arrest)) + geom_boxplot()
+plot
+```
+
+From our boxplot, we see that where Arrest = `TRUE` is towards the bottom of the plot which implies over the first half of the time considered, more arrests were made.
+
+**For what proportion of motor vehichle thefts in 2001 was an arrest made?**
+```{r}
+tapply(mvt$Arrest, mvt$Year, mean)
+```
+**Ans**: 0.104
+
+We can also see a trend that this proprtion is decreasing, but there may still be open investigations for recent crimes or other factors to consider.
+
+***
+
+## Popular Locations
+
+Analyzing this data could be useful to the Chicago Police Department when deciding where to allocate resources. If they want to increase the number of arrests that are made for motor vehicle thefts, where should they focus their efforts?
+
+We want to find the top five locations where motor vehicle thefts occur. Ignore the `OTHER` category.
+```{r}
+sort(table(mvt$LocationDescription), decreasing=TRUE)[1:6]
+```
 
