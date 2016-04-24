@@ -4,7 +4,7 @@ author: "By John Bobo based on a problem set from MIT's Analytics Edge MOOC"
 date: "April 21, 2016"
 output:
     html_document:
-        theme: cerulean
+        theme: spacelab
 ---
 
 ```{r setup, include=FALSE}
@@ -150,5 +150,32 @@ Analyzing this data could be useful to the Chicago Police Department when decidi
 We want to find the top five locations where motor vehicle thefts occur. Ignore the `OTHER` category.
 ```{r}
 sort(table(mvt$LocationDescription), decreasing=TRUE)[1:6]
+top5locations <- unlist(labels(sort(table(mvt$LocationDescription), decreasing=TRUE)[1:6]), recursive=FALSE)
+top5locations <- top5locations[-3]
+top5locations
+```
+
+Now we'll create a subset of our data, only taking observations for which the theft happened in one of these five locations, and call this new data set "top5". 
+
+```{r}
+top5 <- subset(mvt, LocationDescription %in% top5locations)
+```
+
+R will remember the other categories of the LocationDescription variable from the original dataset, so running `table(top5$LocationDescription)` will have a lot of unnecessary output. To make our tables a bit nicer to read, we can refresh this factor variable.
+```{r}
+top5$LocationDescription = factor(top5$LocationDescription)
+```
+If we run the str or table function on `top5` now, you should see that `LocationDescription` now only has 5 values, as we expect.
+
+Use the `top5` data frame to answer the remaining questions.  
+**One of the locations has a much higher arrest rate than the other locations. Which is it?**
+```{r}
+sort(tapply(top5$Arrest, top5$LocationDescription, mean), decreasing = TRUE)[1]
+```
+**Ans**: `GAS STATION`
+
+**On which day of the week do the most motor vehicle thefts at gas stations happen?**
+```{r}
+sort(table(top5[top5$LocationDescription == "GAS STATION",]$Weekday), decreasing=TRUE)[1]
 ```
 
