@@ -353,6 +353,30 @@ summary(predTest)</code></pre>
 <p><strong>What is the range between the maximum and minimum predicted reading score on the test set?</strong><br />
 <strong>Answer:</strong> 284.5</p>
 </div>
+<div id="problem-4.2---test-set-sse-and-rmse" class="section level4">
+<h4>Problem 4.2 - Test set SSE and RMSE</h4>
+<p><strong>What is the sum of squared errors (SSE) of lmScore on the testing set?</strong></p>
+<pre class="r"><code>SSE &lt;- sum((pisaTest$readingScore - predTest)^2)</code></pre>
+<p><strong>Answer:</strong> 5.76210^{6}</p>
+<p><strong>What is the root-mean squared error (RMSE) of lmScore on the testing set?</strong></p>
+<pre class="r"><code>RMSE &lt;- sqrt(SSE/nrow(pisaTest))</code></pre>
+<p><strong>Answer:</strong> 76.291</p>
+</div>
+<div id="problem-4.3---baseline-prediction-and-test-set-sse" class="section level4">
+<h4>Problem 4.3 - Baseline prediction and test-set SSE</h4>
+<p><strong>What is the predicted test score used in the baseline model?</strong></p>
+<pre class="r"><code>baseline &lt;- mean(pisaTrain$readingScore)</code></pre>
+<p><strong>Answer:</strong> 517.963. This is the mean reading Score.</p>
+<p><strong>What is the SST on the the test set?</strong></p>
+<pre class="r"><code>SST &lt;- sum((baseline - pisaTest$readingScore)^2)</code></pre>
+<p><strong>Answer:</strong> 7.80210^{6}</p>
+</div>
+<div id="problem-4.4---test-set-r-squared" class="section level4">
+<h4>Problem 4.4 - Test-set R-squared</h4>
+<p><strong>What is the test-set R-squared value of lmScore?</strong></p>
+<pre class="r"><code>R2 &lt;- 1 - SSE/SST</code></pre>
+<p><strong>Answer:</strong> 0.261</p>
+</div>
 
 
 

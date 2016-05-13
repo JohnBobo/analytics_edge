@@ -179,3 +179,40 @@ summary(predTest)
 **What is the range between the maximum and minimum predicted reading score on the test set?**  
 **Answer:** 284.5
 
+#### Problem 4.2 - Test set SSE and RMSE
+
+**What is the sum of squared errors (SSE) of lmScore on the testing set?**
+```{r}
+SSE <- sum((pisaTest$readingScore - predTest)^2)
+```
+**Answer:** `r SSE`
+
+**What is the root-mean squared error (RMSE) of lmScore on the testing set?**
+```{r}
+RMSE <- sqrt(SSE/nrow(pisaTest))
+```
+**Answer:** `r RMSE`
+
+
+#### Problem 4.3 - Baseline prediction and test-set SSE
+
+**What is the predicted test score used in the baseline model?** 
+```{r}
+baseline <- mean(pisaTrain$readingScore)
+```
+
+**Answer:** `r baseline`. This is the mean reading Score.
+
+**What is the SST on the the test set?**
+```{r}
+SST <- sum((baseline - pisaTest$readingScore)^2)
+```
+**Answer:** `r SST`
+
+#### Problem 4.4 - Test-set R-squared
+
+**What is the test-set R-squared value of lmScore?**
+```{r}
+R2 <- 1 - SSE/SST
+```
+**Answer:** `r R2`
