@@ -1,0 +1,135 @@
+---
+title: "Predicting Parole Violators"
+author: "By John Bobo based on a problem set from MIT’s Analytics Edge MOOC"
+date: "May 14, 2016"
+output:
+    html_document:
+        theme: cerulean
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits=4)
+```
+
+In many criminal justice systems around the world, inmates deemed not to be a threat to society are released from prison under the parole system prior to completing their sentence. They are still considered to be serving their sentence while on parole, and they can be returned to prison if they violate the terms of their parole.
+
+Parole boards are charged with identifying which inmates are good candidates for release on parole. They seek to release inmates who will not commit additional crimes after release. In this problem, we will build and validate a model that predicts if an inmate will violate the terms of his or her parole. Such a model could be useful to a parole board when deciding to approve or deny an application for parole.
+
+For this prediction task, we will use data from the [United States 2004 National Corrections Reporting Program](http://www.icpsr.umich.edu/icpsrweb/NACJD/series/38/studies/26521?archive=NACJD&sortBy=7), a nationwide census of parole releases that occurred during 2004. We limited our focus to parolees who served no more than 6 months in prison and whose maximum sentence for all charges did not exceed 18 months. The dataset contains all such parolees who either successfully completed their term of parole during 2004 or those who violated the terms of their parole during that year. The dataset contains the following variables:
+
+- **male**: 1 if the parolee is male, 0 if female
+- **race**: 1 if the parolee is white, 2 otherwise
+- **age**: the parolee's age (in years) when he or she was released from prison
+- **state**: a code for the parolee's state. 2 is Kentucky, 3 is Louisiana, 4 is Virginia, and 1 is any other state. The three states were selected due to having a high representation in the dataset.
+- **time.served**: the number of months the parolee served in prison (limited by the inclusion criteria to not exceed 6 months).
+- **max.sentence**: the maximum sentence length for all charges, in months (limited by the inclusion criteria to not exceed 18 months).
+- **multiple.offenses**: 1 if the parolee was incarcerated for multiple offenses, 0 otherwise.
+- **crime**: a code for the parolee's main crime leading to incarceration. 2 is larceny, 3 is drug-related crime, 4 is driving-related crime, and 1 is any other crime.
+- **violator**: 1 if the parolee violated the parole, and 0 if the parolee completed the parole without violation.
+
+***
+
+#### Problem 1.1 - Loading the Dataset
+
+(1 point possible)
+Load the dataset parole.csv into a data frame called parole, and investigate it using the str() and summary() functions.
+```{r}
+parole <- read.csv("/Users/johnbobo/analytics_edge/data/parole.csv")
+str(parole)
+summary(parole)
+```
+
+How many parolees are contained in the dataset?  
+**Answer:** `r nrow(parole)`
+
+***
+
+#### Problem 1.2 - Loading the Dataset
+
+(1 point possible)
+How many of the parolees in the dataset violated the terms of their parole?  
+```{r}
+table(parole$violator)
+```
+**Answer:** `r sum(parole$violator)`
+
+***
+
+#### Problem 2.1 - Preparing the Dataset
+
+(1 point possible)
+You should be familiar with unordered factors (if not, review the Week 2 homework problem "Reading Test Scores"). Which variables in this dataset are unordered factors with at least three levels?  
+**Answer:** `state` and `crime`.
+
+***
+
+#### Problem 2.2 - Preparing the Dataset
+
+(1 point possible)
+In the last subproblem, we identified variables that are unordered factors with at least 3 levels, so we need to convert them to factors for our prediction problem. Using the as.factor() function, convert these variables to factors. Keep in mind that we are not changing the values, just the way R understands them (the values are still numbers).
+```{r}
+parole$crime <- as.factor(parole$crime)
+parole$state <- as.factor(parole$state)
+```
+
+How does the output of summary() change for a factor variable as compared to a numerical variable?
+```{r}
+summary(parole)
+```
+**Answer:** The summary for factor variables gives us a frequency count for each level.
+
+***
+
+#### Problem 3.1 - Splitting into a Training and Testing Set
+
+(1 point possible)
+To ensure consistent training/testing set splits, run the following 5 lines of code (do not include the line numbers at the beginning):
+
+```{r}
+set.seed(144)
+library(caTools)
+split = sample.split(parole$violator, SplitRatio = 0.7)
+train = subset(parole, split == TRUE)
+test = subset(parole, split == FALSE)
+```
+
+Roughly what proportion of parolees have been allocated to the training and testing sets?  
+**Answer:** `SplitRatio = 0.7` causes the our training set to have $70\%$ of the data and our test set has the other $30\%$.
+
+***
+
+#### Problem 4.1 - Building a Logistic Regression Model
+
+(1 point possible)
+If you tested other training/testing set splits in the previous section, please re-run the original 5 lines of code to obtain the original split.
+
+Using glm (and remembering the parameter family="binomial"), train a logistic regression model on the training set. Your dependent variable is "violator", and you should use all of the other variables as independent variables.
+
+What variables are significant in this model? Significant variables should have a least one star, or should have a probability less than 0.05 (the column Pr(>|z|) in the summary output). 
+```{r}
+log_reg <- glm(violator ~ ., data = train, family = binomial)
+summary(log_reg)
+```
+**Answer:** `race`, `state4` (Virginia), and `multiple.offenses`
+
+***
+
+#### Problem 4.2 - Building a Logistic Regression Model
+
+(1 point possible)
+What can we say based on the coefficient of the multiple.offenses variable?
+
+**Answer:** Our model predicts that parolees who commited multiple offenses have $5.01$ times higher odds of being a violator than an otherwise identical parolee.
+
+***
+
+#### Problem 4.3 - Building a Logistic Regression Model
+
+(4 points possible)
+Consider a parolee who is male, of white race, aged 50 years at prison release, from the state of Maryland, served 3 months, had a maximum sentence of 12 months, did not commit multiple offenses, and committed a larceny. Answer the following questions based on the model's predictions for this individual. (HINT: You should use the coefficients of your model, the Logistic Response Function, and the Odds equation to solve this problem.)
+
+According to the model, what are the odds this individual is a violator?
+
+
+According to the model, what is the probability this individual is a violator?
