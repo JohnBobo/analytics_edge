@@ -40,9 +40,11 @@ Here's a detailed description of the variables:
 -  **timbre_0_min**, **timbre_0_max**, **timbre_1_min**, **timbre_1_max**, . . . , **timbre_11_min**, and **timbre_11_max** = variables that indicate the minimum/maximum values over all segments for each of the twelve values in the timbre vector (resulting in 24 continuous variables)
 - **Top10** = a binary variable indicating whether or not the song made it to the Top 10 of the Billboard Hot 100 Chart (1 if it was in the top 10, and 0 if it was not)
 
+***
+
 #### Problem 1.1 - Understanding the Data
 
-(1 point possible)
+
 Use the read.csv function to load the dataset "songs.csv" into R.
 ```{r}
 songs <- read.csv("/Users/johnbobo/analytics_edge/data/songs.csv")
@@ -54,9 +56,11 @@ nrow(songs[songs$year==2010,])
 ```
 **Answer:** `r nrow(songs[songs$year==2010,])`
 
+***
+
 #### Problem 1.2 - Understanding the Data
 
-(1 point possible)
+
 **How many songs does the dataset include for which the artist name is "Michael Jackson"?**
 ```{r}
 mj <- subset(songs, artistname == "Michael Jackson")
@@ -64,19 +68,22 @@ nrow(mj)
 ```
 **Answer:** `r nrow(mj)`
 
+***
+
 #### Problem 1.3 - Understanding the Data
 
-(1 point possible)
+
 **Which songs by Michael Jackson made it to the Top 10?**
 ```{r}
 subset(mj, Top10 == 1)$songtitle
 ```
 **Answer:** You Rock My World, You Are Not Alone, Black or White, Remember the Time, In The Closet.
 
+***
 
 #### Problem 1.4 - Understanding the Data
 
-(2 points possible)
+
 The variable corresponding to the estimated time signature (timesignature) is discrete, meaning that it only takes integer values (0, 1, 2, 3, . . . ). **What are the values of this variable that occur in our dataset?**
 ```{r}
 unique(songs$timesignature)
@@ -90,18 +97,22 @@ sort(table(songs$timesignature), decreasing=TRUE)[1]
 
 **Answer**: 4
 
+***
+
 #### Problem 1.5 - Understanding the Data
 
-(1 point possible)
+
 **What is a song with the highest tempo**
 ```{r}
-songs$songtitle[which.max(songs$timesignature)]
+songs$songtitle[which.max(songs$tempo)]
 ```
-**Answer:** Endings and Continuations
+**Answer:** Wanna Be Startin' Somethin'
+
+***
 
 #### Problem 2.1 - Creating Our Prediction Model
 
-(1 point possible)
+
 We wish to predict whether or not a song will make it to the Top 10. To do this, first use the subset function to split the data into a training set "songsTrain" consisting of all the observations up to and including 2009 song releases, and a testing set "songsTest", consisting of the 2010 song releases.
 ```{r}
 songsTrain <- subset(songs, year <= 2009)
@@ -113,3 +124,148 @@ songsTest <- subset(songs, year == 2010)
 nrow(songsTrain)
 ```
 **Answer:** `r nrow(songsTrain)`
+
+***
+
+#### Problem 2.2 - Creating our Prediction Model
+
+
+In this problem, our outcome variable is "Top10" - we are trying to predict whether or not a song will make it to the Top 10 of the Billboard Hot 100 Chart. Since the outcome variable is binary, we will build a logistic regression model. We'll start by using all song attributes as our independent variables, which we'll call Model 1.
+
+We will only use the variables in our dataset that describe the numerical attributes of the song in our logistic regression model. So we won't use the variables "year", "songtitle", "artistname", "songID" or "artistID".
+```{r}
+non_vars <- c("year", "songtitle", "artistname", "songID", "artistID")
+songsTrain <- songsTrain[,!(names(songsTrain) %in% non_vars)]
+songsTest <- songsTest[,!(names(songsTest) %in% non_vars)]
+```
+Now, use the glm function to build a logistic regression model to predict Top10 using all of the other variables as the independent variables. You should use SongsTrain to build the model.
+```{r}
+songs_log <- glm(Top10 ~ ., data=songsTrain, family=binomial)
+summary(songs_log)
+```
+
+**Looking at the summary of your model, what is the value of the Akaike Information Criterion (AIC)?**  
+**Answer:** `r summary(songs_log)$aic`
+
+***
+
+#### Problem 2.3 - Creating Our Prediction Model
+
+
+Let's now think about the variables in our dataset related to the confidence of the time signature, key and tempo (timesignature_confidence, key_confidence, and tempo_confidence). Our model seems to indicate that these confidence variables are significant (rather than the variables timesignature, key and tempo themselves). **What does the model suggest?**  
+**Answer:** The higher our confidence about time signature, key and tempo, the more likely the song is to be in the Top 10.
+
+***
+
+#### Problem 2.4 - Creating Our Prediction Model
+
+
+In general, if the confidence is low for the time signature, tempo, and key, then the song is more likely to be complex. **What does our model suggest in terms of complexity?**  
+**Answer:** Mainstream listeners tend to prefer less complex songs.
+
+***
+
+#### Problem 2.5 - Creating Our Prediction Model
+
+
+Songs with heavier instrumentation tend to be louder (have higher values in the variable "loudness") and more energetic (have higher values in the variable "energy").
+
+**By inspecting the coefficient of the variable "loudness", what does our model suggest?**  
+**Answer:** The coefficient estimate for loudness is positive, implying mainstream listeners prefer louder songs, which are those with heavier instrumentation. However, the coefficient estimate for energy is negative, meaning that mainstream listeners prefer songs that are less energetic, which are those with light instrumentation. These coefficients lead us to different conclusions!
+
+***
+
+#### Problem 3.1 - Beware of Multicollinearity Issues!
+
+
+**What is the correlation between the variables "loudness" and "energy" in the training set?**  
+```{r}
+cor(songsTrain$loudness, songsTrain$energy)
+```
+**Answer:** `r cor(songsTrain$loudness, songsTrain$energy)` --- This means we have an issue with multicollinearity and should drop one of these variables in our model.  
+
+***
+
+#### Problem 3.2 - Beware of Multicollinearity Issues!
+
+
+Create Model 2, which is Model 1 without the independent variable "loudness".
+```{r}
+songs_log_2 <- glm(Top10 ~ . -loudness, data=songsTrain, family=binomial)
+summary(songs_log_2)
+```
+**Inspect the coefficient of the variable "energy". What do you observe?**  
+**Answer:** The coefficient estimate for energy is positive implying mainstream listeners prefer heavier instrumentation. However, the variable energy is not significant in this model.
+
+***
+
+#### Problem 3.3 - Beware of Multicollinearity Issues!
+
+
+Now, create Model 3, which should be exactly like Model 1, but without the variable "energy".
+```{r}
+songs_log_3 <- glm(Top10 ~ . -energy, data=songsTrain, family=binomial)
+summary(songs_log_3)
+```
+
+Look at the summary of Model 3 and inspect the coefficient of the variable "loudness". Remembering that higher loudness and energy both occur in songs with heavier instrumentation, **do we make the same observation about the popularity of heavy instrumentation as we did with Model 2?**  
+**Answer:** Yes because the coefficient estimate is positive for loudness. Additionally this variable is significant in Model 3.
+
+***
+
+#### Problem 4.1 - Validating Our Model
+
+
+Make predictions on the test set using Model 3. What is the accuracy of Model 3 on the test set, using a threshold of 0.45? **(Compute the accuracy as a number between 0 and 1.)**
+```{r}
+predTest = predict(songs_log_3, newdata=songsTest, type="response")
+table(songsTest$Top10, predTest >= 0.45)
+```
+**Answer:** `r (309 + 19)/(nrow(songsTest))`
+
+***
+
+#### Problem 4.2 - Validating Our Model
+
+
+Let's check if there's any incremental benefit in using Model 3 instead of a baseline model. Given the difficulty of guessing which song is going to be a hit, an easier model would be to pick the most frequent outcome (a song is not a Top 10 hit) for all songs. What would the accuracy of the baseline model be on the test set? (Give your answer as a number between 0 and 1.)
+```{r}
+table(songsTest$Top10)
+```
+**Answer:** `r 314/(314+59)`
+
+***
+
+#### Problem 4.3 - Validating Our Model
+
+
+It seems that Model 3 gives us a small improvement over the baseline model. Still, does it create an edge?
+
+Let's view the two models from an investment perspective. A production company is interested in investing in songs that are highly likely to make it to the Top 10. The company's objective is to minimize its risk of financial losses attributed to investing in songs that end up unpopular.
+
+A competitive edge can therefore be achieved if we can provide the production company a list of songs that are highly likely to end up in the Top 10. We note that the baseline model does not prove useful, as it simply does not label any song as a hit. Let us see what our model has to offer.
+
+**How many songs does Model 3 correctly predict as Top 10 hits in 2010 (remember that all songs in 2010 went into our test set), using a threshold of 0.45?**    
+**Answer:** 19
+
+**How many non-hit songs does Model 3 predict will be Top 10 hits (again, looking at the test set), using a threshold of 0.45?**  
+**Answer:** 5
+
+***
+
+#### Problem 4.4 - Validating Our Model
+
+
+**What is the sensitivity of Model 3 on the test set, using a threshold of 0.45?**  
+**Answer:** `r 19/(19+40)`
+
+**What is the specificity of Model 3 on the test set, using a threshold of 0.45?**  
+**Answer:** `r 309/(309+5)`
+
+***
+
+#### Problem 4.5 - Validating Our Model
+
+
+**What conclusions can you make about our model?**  
+**Answer:** Model 3 favors specificity over sensitivity.  It gives us conservative predictions and rarely predicts a song will make it to the Top 10. How ever when it does predict a song being in the Top 10, we can be pretty confident it will make it to the Top 10.
