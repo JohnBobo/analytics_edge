@@ -1,0 +1,184 @@
+---
+title: "Predicting Loan Repayment"
+author: "By John Bobo based on a problem set from MIT’s Analytics Edge MOOC"
+date: "May 15, 2016"
+output:
+    html_document:
+        theme: cerulean
+        keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits=3)
+```
+
+In the lending industry, investors provide loans to borrowers in exchange for the promise of repayment with interest. If the borrower repays the loan, then the lender profits from the interest. However, if the borrower is unable to repay the loan, then the lender loses money. Therefore, lenders face the problem of predicting the risk of a borrower being unable to repay a loan.
+
+To address this problem, we will use publicly available data from [LendingClub.com](https://www.lendingclub.com/info/download-data.action), a website that connects borrowers and investors over the Internet. This dataset represents 9,578 3-year loans that were funded through the LendingClub.com platform between May 2007 and February 2010. The binary dependent variable**not_fully_paid** indicates that the loan was not paid back in full (the borrower either defaulted or the loan was "charged off," meaning the borrower was deemed unlikely to ever pay it back).
+
+To predict this dependent variable, we will use the following independent variables available to the investor when deciding whether to fund a loan:
+
+- **credit.policy**: 1 if the customer meets the credit underwriting criteria of LendingClub.com, and 0 otherwise.
+- **purpose**: The purpose of the loan (takes values "credit_card", "debt_consolidation", "educational", "major_purchase", "small_business", and "all_other").
+- **int.rate**: The interest rate of the loan, as a proportion (a rate of 11% would be stored as 0.11). Borrowers judged by LendingClub.com to be more risky are assigned higher interest rates.
+- **installment**: The monthly installments ($) owed by the borrower if the loan is funded.
+- **log.annual.inc**: The natural log of the self-reported annual income of the borrower.
+- **dti**: The debt-to-income ratio of the borrower (amount of debt divided by annual income).
+- **fico**: The FICO credit score of the borrower.
+- **days.with.cr.line**: The number of days the borrower has had a credit line.
+- **revol.bal**: The borrower's revolving balance (amount unpaid at the end of the credit card billing cycle).
+- **revol.util**: The borrower's revolving line utilization rate (the amount of the credit line used relative to total credit available).
+- **inq.last.6mths**: The borrower's number of inquiries by creditors in the last 6 months.
+- **delinq.2yrs**: The number of times the borrower had been 30+ days past due on a payment in the past 2 years.
+- **pub.rec**: The borrower's number of derogatory public records (bankruptcy filings, tax liens, or judgments).
+
+***
+
+#### Problem 1.1 - Preparing the Dataset
+
+(1 point possible)
+Load the dataset loans.csv into a data frame called loans, and explore it using the str() and summary() functions.
+```{r}
+loans <- read.csv("/Users/johnbobo/analytics_edge/data/loans.csv")
+str(loans)
+summary(loans)
+```
+
+What proportion of the loans in the dataset were not paid in full? Please input a number between 0 and 1.  
+**Answer:** `r mean(loans$not.fully.paid)`
+
+***
+
+#### Problem 1.2 - Preparing the Dataset
+
+(1 point possible)
+Which of the variables has at least one missing observation?  
+**Answer:** `log.annual.inc`, `days.with.cr.line`, `revol.util`, `inq.last.6mnths`, `delinq.2yrs` and `pub.rec`
+
+***
+
+#### Problem 1.3 - Preparing the Dataset
+
+(1 point possible)
+Which is a reason to fill in the missing values for these variables instead of removing observations with missing data?
+
+**Answer:** We want to be able to predict risk for all borrowers, instead of just the ones with all data reported. 
+
+***
+
+#### Problem 1.4 - Preparing the Dataset
+
+(1 point possible)
+For the rest of this problem, we'll be using a revised version of the dataset that has the missing values filled in with multiple imputation. You can download and load into R the dataset we created after running the imputation: [loans_imputed.csv](https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/loans_imputed.csv).
+```{r cache=TRUE}
+library(mice)
+set.seed(144)
+
+vars.for.imputation <- setdiff(names(loans), "not.fully.paid")
+
+imputed <- complete(mice(loans[vars.for.imputation]))
+
+loans[vars.for.imputation] <- imputed
+
+loans <- read.csv("/Users/johnbobo/analytics_edge/data/loans_imputed.csv")
+```
+Note that to do this imputation, we set vars.for.imputation to all variables in the data frame except for not.fully.paid, to impute the values using all of the other independent variables.
+
+What best describes the process we just used to handle missing values?  
+**Answer:** We predicted missing variable values using the available independent variables for each observation.
+
+***
+
+#### Problem 2.1 - Prediction Models
+
+(1 point possible)
+Now that we have prepared the dataset, we need to split it into a training and testing set. To ensure everybody obtains the same split, set the random seed to 144 (even though you already did so earlier in the problem) and use the sample.split function to select the 70% of observations for the training set (the dependent variable for sample.split is not.fully.paid). Name the data frames train and test.
+```{r}
+set.seed(144)
+library(caTools)
+
+split <- sample.split(loans$not.fully.paid, SplitRatio = 0.7)
+
+train <- subset(loans, split == TRUE)
+test <- subset(loans, split == FALSE)
+```
+
+Now, use logistic regression trained on the training set to predict the dependent variable not.fully.paid using all the independent variables.
+```{r}
+log_reg <- glm(not.fully.paid ~ ., data = train, family = binomial)
+summary(log_reg)
+```
+Which independent variables are significant in our model? (Significant variables have at least one star, or a Pr(>|z|) value less than 0.05.) 
+```{r}
+names(summary(log_reg)$coef[summary(log_reg)$coef[,4] <= .05, 4][-1])
+```
+
+**Answer:** `credit.policy`, `purposecredit_card`, `purposedebt_consolidation`, `purposemajor_purchase`, `purposesmall_business`, `installment`, `log.annual.inc`, `fico`, `revol.bal`, `inq.last.6mths`, and `pub.rec`.
+
+***
+
+#### Problem 2.2 - Prediction Models
+
+(4 points possible)
+Consider two loan applications, which are identical other than the fact that the borrower in Application A has FICO credit score 700 while the borrower in Application B has FICO credit score 710.
+
+Let $\text{Logit}(A)$ be the log odds of loan A not being paid back in full, according to our logistic regression model, and define $\text{Logit}(B)$ similarly for loan B. What is the value of $\text{Logit}(A)-\text{Logit}(B)$?
+
+**Answer:**  `r -9.317e-03  *(-10)`
+
+Now, let O(A) be the odds of loan A not being paid back in full, according to our logistic regression model, and define O(B) similarly for loan B. What is the value of O(A)/O(B)? (HINT: Use the mathematical rule that exp(A + B + C) = exp(A)*exp(B)*exp(C). Also, remember that exp() is the exponential function in R.)
+
+**Answer:** `r exp(-9.317e-03  *(-10))` This is just $e^{\text{Logit}(A)-\text{Logit}(B)}$.
+
+***
+
+#### Problem 2.3 - Prediction Models
+
+(4 points possible)
+Predict the probability of the test set loans not being paid back in full (remember type="response" for the predict function). Store these predicted probabilities in a variable named predicted.risk and add it to your test set (we will use this variable in later parts of the problem). Compute the confusion matrix using a threshold of 0.5.
+```{r}
+predicted.risk <- predict(log_reg, newdata = test, type = 'response')
+test$predicted.risk <- predicted.risk
+
+table(test$not.fully.paid, predicted.risk >= 0.5)
+```
+
+What is the accuracy of the logistic regression model? Input the accuracy as a number between 0 and 1.
+
+**Answer:** `r (2400 + 3)/nrow(test)`, found using information in the table above.
+
+What is the accuracy of the baseline model? Input the accuracy as a number between 0 and 1.
+
+**Answer:** `r 1 - mean(test$not.fully.paid)`, where the baseline assumes every loan is paid back in full.
+
+***
+
+#### Problem 2.4 - Prediction Models
+
+(2 points possible)
+Use the ROCR package to compute the test set AUC.
+```{r}
+library(ROCR)
+
+rocr_pred <- prediction(predicted.risk, test$not.fully.paid)
+rocr_perf <- performance(rocr_pred, "tpr", "fpr")
+plot(rocr_perf, colorize = TRUE)
+
+auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
+```
+
+**Answer:** `r auc`. 
+
+***
+
+#### Problem 3.1 - A "Smart Baseline"
+
+(1 point possible)
+In the [previous problem](), we built a logistic regression model that has an AUC significantly higher than the AUC of 0.5 that would be obtained by randomly ordering observations.
+
+However, LendingClub.com assigns the interest rate to a loan based on their estimate of that loan's risk. This variable, int.rate, is an independent variable in our dataset. In this part, we will investigate using the loan's interest rate as a "smart baseline" to order the loans according to risk.
+
+Using the training set, build a bivariate logistic regression model (aka a logistic regression model with a single independent variable) that predicts the dependent variable not.fully.paid using only the variable int.rate.
+
+The variable int.rate is highly significant in the bivariate model, but it is not significant at the 0.05 level in the model trained with all the independent variables. What is the most likely explanation for this difference?

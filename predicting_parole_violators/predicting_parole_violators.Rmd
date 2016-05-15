@@ -183,7 +183,7 @@ What is the model's accuracy?
 
 #### Problem 5.3 - Evaluating the Model on the Testing Set
 
-(1 point possible)
+
 What is the accuracy of a simple model that predicts that every parolee is a non-violator?
 ```{r}
 accuracy <- 1 - mean(test$violator)
@@ -195,7 +195,7 @@ accuracy <- 1 - mean(test$violator)
 
 #### Problem 5.4 - Evaluating the Model on the Testing Set
 
-(1 point possible)
+
 Consider a parole board using the model to predict whether parolees will be violators or not. The job of a parole board is to make sure that a prisoner is ready to be released into free society, and therefore parole boards tend to be particularily concerned about releasing prisoners who will violate their parole. Which of the following most likely describes their preferences and best course of action?  
 
 **Answer:** The board assigns more cost to a false negative than a false positive, and should therefore use a logistic regression cutoff less than 0.5. 
@@ -204,7 +204,7 @@ Consider a parole board using the model to predict whether parolees will be viol
 
 #### Problem 5.5 - Evaluating the Model on the Testing Set
 
-(1 point possible)
+
 What is an accurate assessment of the value of the logistic regression model with a cutoff 0.5 to a parole board, based on the model's accuracy as compared to the simple baseline model? 
 
 **Answer:** The model is likely of value to the board, and using a different logistic regression cutoff is likely to improve the model's value. 
@@ -213,7 +213,7 @@ What is an accurate assessment of the value of the logistic regression model wit
 
 #### Problem 5.6 - Evaluating the Model on the Testing Set
 
-(2 points possible)
+
 Using the ROCR package, what is the AUC value for the model?
 ```{r}
 library(ROCR)
@@ -229,7 +229,7 @@ auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
 
 #### Problem 5.7 - Evaluating the Model on the Testing Set
 
-(1 point possible)
+
 Describe the meaning of AUC in this context.  
 **Answer:** The probability the model can correctly differentiate between a randomly selected parole violator and a randomly selected parole non-violator. 
 
@@ -237,7 +237,7 @@ Describe the meaning of AUC in this context.
 
 #### Problem 6.1 - Identifying Bias in Observational Data
 
-(1 point possible)
+
 Our goal has been to predict the outcome of a parole decision, and we used a publicly available dataset of parole releases for predictions. In this final problem, we'll evaluate a potential source of bias associated with our analysis. It is always important to evaluate a dataset for possible sources of bias.
 
 The dataset contains all individuals released from parole in 2004, either due to completing their parole term or violating the terms of their parole. However, it does not contain parolees who neither violated their parole nor completed their term in 2004, causing non-violators to be underrepresented. This is called "selection bias" or "selecting on the dependent variable," because only a subset of all relevant parolees were included in our analysis, based on our dependent variable in this analysis (parole violation). How could we improve our dataset to best address selection bias?  
