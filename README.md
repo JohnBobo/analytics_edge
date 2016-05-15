@@ -6,14 +6,16 @@ This repo has work I did while following the [Analytics Edge MOOC](https://www.e
 ## Contents
 
 #### Introduction to Analytics
-* analytical_detective
-* demographics_and_employment_in_US
-* stock_dynamics
+* [Analytical Detective](https://github.com/JohnBobo/analytics_edge/tree/master/analytical_detective)
+* [Demographics and Employment in the US](https://github.com/JohnBobo/analytics_edge/tree/master/demographics_and_employment_in_US)
+* [Stock Dynamics](https://github.com/JohnBobo/analytics_edge/tree/master/stock_dynamics)
 
 #### Linear Regression
-* climate_change
-* detecting_flu_epidemics
-* reading_test_scores
+* [Climate Change](https://github.com/JohnBobo/analytics_edge/tree/master/climate_change)
+* [Detecting Flu Epidemics](https://github.com/JohnBobo/analytics_edge/tree/master/detecting_flu_epidemics)
+* [Reading Test Scores](https://github.com/JohnBobo/analytics_edge/tree/master/reading_test_scores)
 
 #### Logistic Regression
-* popularity_of_music_records
+* [Popularity of Music Records](https://github.com/JohnBobo/analytics_edge/tree/master/popularity_of_music_records)
+* [Predicting Parole Violators](https://github.com/JohnBobo/analytics_edge/tree/master/predicting_parole_violators)
+* [Predicting Loan Repayment](https://github.com/JohnBobo/analytics_edge/tree/master/predicting_loan_repayment)
