@@ -1,0 +1,251 @@
+---
+title: "Demographics and Employment in the US"
+author: "By John Bobo based on a problem set from MIT’s Analytics Edge MOOC"
+date: "April 24, 2016"
+output:
+    html_document:
+        theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In the wake of the Great Recession of 2009, there has been a good deal of focus on employment statistics, one of the most important metrics policymakers use to gauge the overall strength of the economy. In the United States, the government measures unemployment using the Current Population Survey (CPS), which collects demographic and employment information from a wide range of Americans each month. In this exercise, we will employ the topics reviewed in the lectures as well as a few new techniques using the September 2013 version of this rich, nationally representative dataset (available [online](http://thedataweb.rm.census.gov/ftp/cps_ftp.html)).
+
+The observations in the dataset represent people surveyed in the September 2013 CPS who actually completed a survey. While the full dataset has 385 variables, in this exercise we will use a more compact version of the dataset, [CPSData.csv](https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/CPSData.csv), which has the following variables:
+
+  * **PeopleInHousehold**: The number of people in the interviewee's household.
+
+  * **Region**: The census region where the interviewee lives.
+
+  * **State**: The state where the interviewee lives.
+
+  * **MetroAreaCode**: A code that identifies the metropolitan area in which the interviewee lives (missing if the interviewee does not live in a metropolitan area). The mapping from codes to names of metropolitan areas is provided in the file [MetroAreaCodes.csv](https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/MetroAreaCodes.csv).
+
+  * **Age**: The age, in years, of the interviewee. 80 represents people aged 80-84, and 85 represents people aged 85 and higher.
+
+  * **Married**: The marriage status of the interviewee.
+
+  * **Sex**: The sex of the interviewee.
+
+  * **Education**: The maximum level of education obtained by the interviewee.
+
+  * **Race**: The race of the interviewee.
+
+  * **Hispanic**: Whether the interviewee is of Hispanic ethnicity.
+
+  * **CountryOfBirthCode**: A code identifying the country of birth of the interviewee. The mapping from codes to names of countries is provided in the file [CountryCodes.csv](https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/CountryCodes.csv).
+
+  * **Citizenship**: The United States citizenship status of the interviewee.
+
+  * **EmploymentStatus**: The status of employment of the interviewee.
+
+  * **Industry**: The industry of employment of the interviewee (only available if they are employed).
+  
+***
+  
+## Loading and Summarizing the Dataset
+```{r}
+cps <- read.csv("/Users/johnbobo/analytics_edge/data/CPSData.csv")
+str(cps)
+summary(cps)
+```
+**How many interviewees are in the dataset?**  
+**Answer**: 131302
+
+***
+
+**Among the interviewees with a value reported for the Industry variable (not NA nor `(Other)`), what is the most common industry of employment?**  
+**Answer**: Educational and health services
+  
+***
+
+**Which state has the fewest interviewees?**
+```{r}
+sort(table(cps$State))[1]
+```
+**Answer**: New Mexico
+
+***
+
+**Which state has the largest number of interviewees?**
+```{r}
+sort(table(cps$State), decreasing = TRUE)[1]
+```
+**Answer**: California
+
+***
+
+**What proportion of interviewees are citizens of the United States?**
+```{r}
+mean(grepl("^Citizen", cps$Citizenship))
+```
+**Answer**: 0.942
+
+***
+
+**The CPS differentiates between race (with possible values American Indian, Asian, Black, Pacific Islander, White, or Multiracial) and ethnicity. A number of interviewees are of Hispanic ethnicity, as captured by the Hispanic variable. For which races are there at least 250 interviewees in the CPS dataset of Hispanic ethnicity?**  
+```{r}
+sort(table(subset(cps, Hispanic == 1)$Race) >250)
+```
+**Answer**: American Indian, Black, Multiracial, and White.
+
+***
+
+## Evaluating Missing Values
+
+**Which variables have at least one interviewee with a missing (NA) value?**
+**Answer**: Using `summary(cps)` above we see the answer is `MetroAreaCode`, `Married`, `Education`, `EmploymentStatus`, and `Industry`.
+
+***
+
+Often when evaluating a new dataset, we try to identify if there is a pattern in the missing values in the dataset. We will try to determine if there is a pattern in the missing values of the `Married` variable. The function `is.na(cps$Married)` returns a vector of `TRUE`/`FALSE` values for whether the `Married` variable is missing. We can see the breakdown of whether `Married` is missing based on the reported value of the `Region` variable with the function `table(cps$Region, is.na(cps$Married))`.
+```{r}
+table(cps$Region, is.na(cps$Married))
+table(cps$Age, is.na(cps$Married))
+table(cps$Citizenship, is.na(cps$Married))
+table(cps$Sex, is.na(cps$Married))
+```
+**What can we see from these tables?**  
+**Answer**: From these we can see the `Married` variable being missing is related to the `Age` value for the interviewee. Kids aren't really eligible for employment so this makes sense.
+
+***
+
+As mentioned in the variable descriptions, MetroAreaCode is missing if an interviewee does not live in a metropolitan area. Using the same technique as in the previous question, answer the following questions about people who live in non-metropolitan areas.
+
+**How many states had all interviewees living in a non-metropolitan area (aka they have a missing MetroAreaCode value)? For this question, treat the District of Columbia as a state (even though it is not technically a state).**
+```{r}
+table(cps$State, is.na(cps$MetroAreaCode)) 
+```
+**Answer**: 2
+
+**How many states had all interviewees living in a metropolitan area? Again, treat the District of Columbia as a state.**  
+**Answer**: 3
+
+***
+
+**Which region of the United States has the largest proportion of interviewees living in a non-metropolitan area?**
+```{r}
+sort(tapply(is.na(cps$MetroAreaCode), cps$Region, mean), decreasing = TRUE)
+```
+**Answer**: Midwest.
+
+***
+
+**Which state has a proportion of interviewees living in a non-metropolitan area closest to 30%?**
+```{r}
+sort(tapply(is.na(cps$MetroAreaCode), cps$State, mean), decreasing = TRUE)
+```
+**Answer**: Wisconsin.
+
+**Which state has the largest proportion of non-metropolitan interviewees, ignoring states where all interviewees were non-metropolitan?**  
+**Answer**: Montana.
+
+## Integrating Metropolitan Area Data
+Codes like `MetroAreaCode` and `CountryOfBirthCode` are a compact way to encode factor variables with text as their possible values, and they are therefore quite common in survey datasets. In fact, all but one of the variables in this dataset were actually stored by a numeric code in the original CPS datafile.
+
+When analyzing a variable stored by a numeric code, we will often want to convert it into the values the codes represent. To do this, we will use a dictionary, which maps the the code to the actual value of the variable. We have dictionaries `MetroAreaCodes.csv` and `CountryCodes.csv`, which respectively map `MetroAreaCode` and `CountryOfBirthCode` into their true values. Now we'll read these two dictionaries into data frames `MetroAreaMap` and `CountryMap`.
+```{r}
+MetroAreaMap <- read.csv("/Users/johnbobo/analytics_edge/data/MetroAreaCodes.csv")
+CountryMap <- read.csv("/Users/johnbobo/analytics_edge/data/CountryCodes.csv")
+```
+**How many observations (codes for metropolitan areas) are there in MetroAreaMap?**
+```{r}
+nrow(MetroAreaMap)
+```
+**Answer**: 271  
+
+**How many observations (codes for countries) are there in CountryMap?**
+```{r}
+nrow(CountryMap)
+```
+**Answer**: 149
+
+***
+
+To merge in the metropolitan areas, we want to connect the field MetroAreaCode from the CPS data frame with the field Code in MetroAreaMap. The following command merges the two data frames on these columns, overwriting the CPS data frame with the result:
+```{r}
+cps <- merge(cps, MetroAreaMap, by.x="MetroAreaCode", by.y="Code", all.x=TRUE)
+```
+The first two arguments determine the data frames to be merged (they are called "x" and "y", respectively, in the subsequent parameters to the merge function). by.x="MetroAreaCode" means we're matching on the MetroAreaCode variable from the "x" data frame (CPS), while by.y="Code" means we're matching on the Code variable from the "y" data frame (MetroAreaMap). Finally, all.x=TRUE means we want to keep all rows from the "x" data frame (CPS), even if some of the rows' MetroAreaCode doesn't match any codes in MetroAreaMap (for those familiar with database terminology, this parameter makes the operation a left outer join instead of an inner join).
+
+**What is the name of the variable that was added to the data frame by the merge() operation?**
+```{r}
+str(cps)
+```
+**Answer**: `MetroArea`
+
+**How many interviewees have a missing value for the new metropolitan area variable? Note that all of these interviewees would have been removed from the merged data frame if we did not include the all.x=TRUE parameter.**
+```{r}
+sum(is.na(cps$MetroArea))
+```
+**Answer**: 34238
+
+***
+
+**Which metropolitan area has the highest proportion of interviewees of Hispanic ethnicity?**
+```{r}
+sort(tapply(cps$Hispanic, cps$MetroArea, mean), decreasing=TRUE)[1]
+```
+**Answer**: Laredo, TX
+
+***
+
+**How many metropolitan areas in the US have at least 20% of interviewees that are Asian?**
+```{r}
+sum(tapply(cps$Race == "Asian", cps$MetroArea, mean) >= .2, na.rm=TRUE)
+```
+**Answer**: 4.
+
+***
+
+**Which metropolitan area has the smallest proportion of interviewees who have received no high school diploma?**
+```{r}
+sort(tapply(cps$Education == "No high school diploma", cps$MetroArea, mean, na.rm=TRUE))[1]
+```
+**Answer**: Iowa City, IA
+
+***
+
+## Integrating Country of Birth Data
+Just as we did with the metropolitan area information, merge in the country of birth information from the `CountryMap` data frame, replacing the `cps` data frame with the result. If you accidentally overwrite `cps` with the wrong values, remember that you can restore it by re-loading the data frame from `CPSData.csv` and then merging in the metropolitan area information using the command provided in the previous subproblem.
+```{r}
+cps <- merge(cps, CountryMap, by.x="CountryOfBirthCode", by.y="Code", all.x=TRUE)
+```
+
+**What is the name of the variable added to the CPS data frame by this merge operation?**
+```{r}
+str(cps)
+```
+**Answer**: Country.
+
+**How may interviewees have a missing value for the new country of birth variable?**
+```{r}
+sum(is.na(cps$Country))
+```
+**Answer**: 176
+
+***
+
+**Among all interviewees born outside of North America, which country was the most common place of birth?**
+```{r}
+sort(table(cps$Country), decreasing=TRUE)[1:3]
+```
+**Answer**: Philippines
+
+***
+
+**What proportion of the interviewees from the "New York-Northern New Jersey-Long Island, NY-NJ-PA" metropolitan area have a country of birth that is not the United States? For this computation, don't include people from this metropolitan area who have a missing country of birth.**
+```{r}
+mean(subset(cps, MetroArea == "New York-Northern New Jersey-Long Island, NY-NJ-PA")$Country != "United States", na.rm=TRUE)
+```
+**Answer**: 0.309
+
+***
+
+**Which metropolitan area has the largest number (note -- not proportion) of interviewees with a country of birth in India?**
+```{r}
+sort(tapply(cps$Country == "India", cps$MetroArea, sum, na.rm=TRUE), decreasing=TRUE)[1]
+```
+
