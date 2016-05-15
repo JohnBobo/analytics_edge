@@ -9,7 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-options(digits=4)
+options(digits=3)
 ```
 
 In many criminal justice systems around the world, inmates deemed not to be a threat to society are released from prison under the parole system prior to completing their sentence. They are still considered to be serving their sentence while on parole, and they can be returned to prison if they violate the terms of their parole.
@@ -32,7 +32,7 @@ For this prediction task, we will use data from the [United States 2004 National
 
 #### Problem 1.1 - Loading the Dataset
 
-(1 point possible)
+
 Load the dataset parole.csv into a data frame called parole, and investigate it using the str() and summary() functions.
 ```{r}
 parole <- read.csv("/Users/johnbobo/analytics_edge/data/parole.csv")
@@ -47,7 +47,7 @@ How many parolees are contained in the dataset?
 
 #### Problem 1.2 - Loading the Dataset
 
-(1 point possible)
+
 How many of the parolees in the dataset violated the terms of their parole?  
 ```{r}
 table(parole$violator)
@@ -58,7 +58,7 @@ table(parole$violator)
 
 #### Problem 2.1 - Preparing the Dataset
 
-(1 point possible)
+
 You should be familiar with unordered factors (if not, review the Week 2 homework problem "Reading Test Scores"). Which variables in this dataset are unordered factors with at least three levels?  
 **Answer:** `state` and `crime`.
 
@@ -66,7 +66,7 @@ You should be familiar with unordered factors (if not, review the Week 2 homewor
 
 #### Problem 2.2 - Preparing the Dataset
 
-(1 point possible)
+
 In the last subproblem, we identified variables that are unordered factors with at least 3 levels, so we need to convert them to factors for our prediction problem. Using the as.factor() function, convert these variables to factors. Keep in mind that we are not changing the values, just the way R understands them (the values are still numbers).
 ```{r}
 parole$crime <- as.factor(parole$crime)
@@ -83,7 +83,7 @@ summary(parole)
 
 #### Problem 3.1 - Splitting into a Training and Testing Set
 
-(1 point possible)
+
 To ensure consistent training/testing set splits, run the following 5 lines of code (do not include the line numbers at the beginning):
 
 ```{r}
@@ -101,7 +101,7 @@ Roughly what proportion of parolees have been allocated to the training and test
 
 #### Problem 4.1 - Building a Logistic Regression Model
 
-(1 point possible)
+
 If you tested other training/testing set splits in the previous section, please re-run the original 5 lines of code to obtain the original split.
 
 Using glm (and remembering the parameter family="binomial"), train a logistic regression model on the training set. Your dependent variable is "violator", and you should use all of the other variables as independent variables.
@@ -117,7 +117,7 @@ summary(log_reg)
 
 #### Problem 4.2 - Building a Logistic Regression Model
 
-(1 point possible)
+
 What can we say based on the coefficient of the multiple.offenses variable?
 
 **Answer:** Our model predicts that parolees who commited multiple offenses have $5.01$ times higher odds of being a violator than an otherwise identical parolee.
@@ -126,10 +126,120 @@ What can we say based on the coefficient of the multiple.offenses variable?
 
 #### Problem 4.3 - Building a Logistic Regression Model
 
-(4 points possible)
+
 Consider a parolee who is male, of white race, aged 50 years at prison release, from the state of Maryland, served 3 months, had a maximum sentence of 12 months, did not commit multiple offenses, and committed a larceny. Answer the following questions based on the model's predictions for this individual. (HINT: You should use the coefficients of your model, the Logistic Response Function, and the Odds equation to solve this problem.)
 
 According to the model, what are the odds this individual is a violator?
+```{r}
+logit <- -4.2411574 + 0.3869904 + 0.8867192 - 0.0001756*50 - 0.1238867*3 + 0.0802954*12 + 0.6837143
+odds <- exp(logit)
+```
 
+**Answer:** `r odds`
 
 According to the model, what is the probability this individual is a violator?
+```{r}
+prob <- 1/(1 + exp(-logit))
+```
+
+**Answer:** `r prob`
+
+***
+
+#### Problem 5.1 - Evaluating the Model on the Testing Set
+
+
+Use the predict() function to obtain the model's predicted probabilities for parolees in the testing set, remembering to pass type="response".
+```{r}
+predTest <- predict(log_reg, newdata=test, type="response")
+```
+
+What is the maximum predicted probability of a violation?
+```{r}
+max(predTest)
+```
+**Answer:** `r max(predTest)`
+
+***
+
+#### Problem 5.2 - Evaluating the Model on the Testing Set
+
+
+In the following questions, evaluate the model's predictions on the test set using a threshold of 0.5.
+```{r}
+table(test$violator, predTest >= 0.5)
+```
+
+What is the model's sensitivity?  
+**Answer:** `r 12/(12+11)`
+
+What is the model's specificity?  
+**Answer:** `r 167/(167 + 12)`
+
+What is the model's accuracy?  
+**Answer:** `r (167+12)/(nrow(test))`
+
+***
+
+#### Problem 5.3 - Evaluating the Model on the Testing Set
+
+(1 point possible)
+What is the accuracy of a simple model that predicts that every parolee is a non-violator?
+```{r}
+accuracy <- 1 - mean(test$violator)
+```
+
+**Answer:** `r accuracy` 
+
+***
+
+#### Problem 5.4 - Evaluating the Model on the Testing Set
+
+(1 point possible)
+Consider a parole board using the model to predict whether parolees will be violators or not. The job of a parole board is to make sure that a prisoner is ready to be released into free society, and therefore parole boards tend to be particularily concerned about releasing prisoners who will violate their parole. Which of the following most likely describes their preferences and best course of action?  
+
+**Answer:** The board assigns more cost to a false negative than a false positive, and should therefore use a logistic regression cutoff less than 0.5. 
+
+***
+
+#### Problem 5.5 - Evaluating the Model on the Testing Set
+
+(1 point possible)
+What is an accurate assessment of the value of the logistic regression model with a cutoff 0.5 to a parole board, based on the model's accuracy as compared to the simple baseline model? 
+
+**Answer:** The model is likely of value to the board, and using a different logistic regression cutoff is likely to improve the model's value. 
+
+***
+
+#### Problem 5.6 - Evaluating the Model on the Testing Set
+
+(2 points possible)
+Using the ROCR package, what is the AUC value for the model?
+```{r}
+library(ROCR)
+rocr_pred <- prediction(predTest, test$violator)
+rocr_perf <- performance(rocr_pred, "tpr", "fpr")
+plot(rocr_perf, colorize = TRUE)
+
+auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
+```
+**Answer:** `r auc`
+
+***
+
+#### Problem 5.7 - Evaluating the Model on the Testing Set
+
+(1 point possible)
+Describe the meaning of AUC in this context.  
+**Answer:** The probability the model can correctly differentiate between a randomly selected parole violator and a randomly selected parole non-violator. 
+
+***
+
+#### Problem 6.1 - Identifying Bias in Observational Data
+
+(1 point possible)
+Our goal has been to predict the outcome of a parole decision, and we used a publicly available dataset of parole releases for predictions. In this final problem, we'll evaluate a potential source of bias associated with our analysis. It is always important to evaluate a dataset for possible sources of bias.
+
+The dataset contains all individuals released from parole in 2004, either due to completing their parole term or violating the terms of their parole. However, it does not contain parolees who neither violated their parole nor completed their term in 2004, causing non-violators to be underrepresented. This is called "selection bias" or "selecting on the dependent variable," because only a subset of all relevant parolees were included in our analysis, based on our dependent variable in this analysis (parole violation). How could we improve our dataset to best address selection bias?  
+
+**Answer:**  We should use a dataset tracking a group of parolees from the start of their parole until either they violated parole or they completed their term.
