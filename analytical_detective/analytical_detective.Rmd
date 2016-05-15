@@ -1,0 +1,181 @@
+---
+title: "Analytical Detective"
+author: "By John Bobo based on a problem set from MIT's Analytics Edge MOOC" 
+date: "April 21, 2016"
+output:
+    html_document:
+        theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+
+Crime is an international concern, but it's documented and handled in very different ways in different countries. In the United States, violent crimes and property crimes are recorded by the Federal Bureau of Investigation (FBI).  Additionally, each city documents crime, and some cities release data regarding crime rates. The city of Chicago, Illinois releases crime data from 2001 onward [online](https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2).
+
+Chicago is the third most populous city in the United States, with a population of over 2.7 million people.
+
+There are two main types of crimes: violent crimes, and property crimes. In this problem, we'll focus on one specific type of property crime, called "motor vehicle theft" (sometimes referred to as grand theft auto). This is the act of stealing, or attempting to steal, a car. In this problem, we'll use some basic data analysis in R to understand the motor vehicle thefts in Chicago. 
+
+Please download the file [mvtWeek1.csv]( https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/mvtWeek1.csv) for this exploration (do not open this file in any spreadsheet software before completing this problem because it might change the format of the Date field). Here is a list of descriptions of the variables:
+
+  * **ID**: a unique identifier for each observation  
+  * **Date**: the date the crime occurred  
+  * **LocationDescription**: the location where the crime occurred  
+  * **Arrest**: whether or not an arrest was made for the crime (TRUE if an arrest was made, and FALSE if an arrest was not made)    
+  * **Domestic**: whether or not the crime was a domestic crime, meaning that it was committed against a family member (TRUE if it was domestic, and FALSE if it was not domestic)  
+  * **Beat**: the area, or "beat" in which the crime occurred. This is the smallest regional division defined by the Chicago police department.  
+  * **District**: the police district in which the crime occurred. Each district is composed of many beats, and are defined by the Chicago Police Department.  
+  * **CommunityArea**: the community area in which the crime occurred. Since the 1920s, Chicago has been divided into what are called "community areas", of which there are now 77. The community areas were devised in an attempt to create socially homogeneous regions.   
+  * **Year**: the year in which the crime occurred.  
+  * **Latitude**: the latitude of the location at which the crime occurred.  
+  * **Longitutde**: the longitude of the location at which the crime occurred.
+
+## Loading the Data
+```{r}
+mvt <- read.csv("/Users/johnbobo/analytics_edge/data/mvtWeek1.csv")
+```
+
+**How many observations does our dataset hold?**
+```{r}
+nrow(mvt)
+```
+**How many variables are in this dataset?**
+```{r}
+ncol(mvt)
+```
+**What is the maximum values fo the variable "ID"?**
+```{r}
+max(mvt$ID)
+```
+**What is the minimum value of the variable "Beat"?**
+```{r}
+min(mvt$Beat)
+```
+**How many observations have value `TRUE` in the Arrest variable?**
+```{r}
+sum(mvt$Arrest)
+```
+**How many observations have a LocationDescription value of `ALLEY`?**
+```{r}
+sum(mvt$LocationDescription == 'ALLEY')
+```
+***
+## Understanding Dates
+**In what format are the entries in the variable Date?**
+```{r}
+mvt$Date[1]
+```
+**Ans**: Month/Day/Year Hour:Minute
+
+Now, let's convert these characters into a Date object in R.
+```{r}
+DateConvert = as.Date(strptime(mvt$Date, "%m/%d/%y %H:%M"))
+```
+This converts the variable "Date" into a Date object in R. Let's look at the variable DateConvert using the summary function.
+```{r}
+summary(DateConvert)
+```
+**What is the month and year of the median date in our dataset?**  
+**Ans**: May 2006
+
+Now, let's extract the month and the day of the week, and add these variables to our data frame mvt. We can do this with two simple functions.
+```{r}
+mvt$Month = months(DateConvert)
+mvt$Weekday = weekdays(DateConvert)
+
+# Replace the old Date variable
+mvt$Date = DateConvert
+```
+
+**In which month did the fewest motor vehicle thefts occur?**
+```{r}
+sort(table(mvt$Month))[1]
+```
+
+**On which weekday did the most motor vehicle thefts occur?**
+```{r}
+sort(table(mvt$Weekday), decreasing = TRUE)[1]
+```
+
+**Each observation in the dataset represents a motor vehicle theft, and the Arrest variable indicates whether an arrest was later made for this theft. Which month has the largest number of motor vehicle thefts for which an arrest was made?**
+```{r}
+sort(table(mvt$Month, mvt$Arrest)[,2], decreasing = TRUE)[1]
+```
+
+***
+
+## Visualizing Crime Trends
+
+Now, let's make some plots to help us better understand how crime has changed over time in Chicago. Throughout this problem, and in general, you can save your plot to a file. For more information, [this website](http://www.stat.berkeley.edu/~s133/saving.html) very clearly explains the process.
+
+First, let's make a histogram of the variable Date.
+
+```{r}
+plot <- ggplot(data = mvt, aes(x = Date)) +
+            geom_histogram(stat="bin", binwidth = 100, aes(fill=..count..)) +
+            scale_fill_gradient("Count", low = "green", high = "red") +
+            ggtitle("Chicago Crime over Time") +
+            ylab("Crimes")
+plot  
+```
+
+While there isn't a clear trend it appears crime decreases from 2002 - 2012 with an upward trend from 2009 - 2011.
+
+Now, let's see how arrests have changed over time. We'll create a boxplot of the variable "Date", sorted by the variable "Arrest". In a boxplot, the bold horizontal line is the median value of the data, the box shows the range of values between the first quartile and third quartile, and the whiskers (the dotted lines extending outside the box) show the minimum and maximum values, excluding any outliers (which are plotted as circles). Outliers are defined by first computing the difference between the first and third quartile values, or the height of the box. This number is called the Inter-Quartile Range (IQR). Any point that is greater than the third quartile plus the IQR or less than the first quartile minus the IQR is considered an outlier.
+
+```{r}
+plot <- ggplot(mvt, aes(x=Arrest, y=Date, fill=Arrest)) + geom_boxplot()
+plot
+```
+
+From our boxplot, we see that where Arrest = `TRUE` is towards the bottom of the plot which implies over the first half of the time considered, more arrests were made.
+
+**For what proportion of motor vehichle thefts in 2001 was an arrest made?**
+```{r}
+tapply(mvt$Arrest, mvt$Year, mean)
+```
+**Ans**: 0.104
+
+We can also see a trend that this proprtion is decreasing, but there may still be open investigations for recent crimes or other factors to consider.
+
+***
+
+## Popular Locations
+
+Analyzing this data could be useful to the Chicago Police Department when deciding where to allocate resources. If they want to increase the number of arrests that are made for motor vehicle thefts, where should they focus their efforts?
+
+We want to find the top five locations where motor vehicle thefts occur. Ignore the `OTHER` category.
+```{r}
+sort(table(mvt$LocationDescription), decreasing=TRUE)[1:6]
+top5locations <- unlist(labels(sort(table(mvt$LocationDescription), decreasing=TRUE)[1:6]), recursive=FALSE)
+top5locations <- top5locations[-3]
+top5locations
+```
+
+Now we'll create a subset of our data, only taking observations for which the theft happened in one of these five locations, and call this new data set "top5". 
+
+```{r}
+top5 <- subset(mvt, LocationDescription %in% top5locations)
+```
+
+R will remember the other categories of the LocationDescription variable from the original dataset, so running `table(top5$LocationDescription)` will have a lot of unnecessary output. To make our tables a bit nicer to read, we can refresh this factor variable.
+```{r}
+top5$LocationDescription = factor(top5$LocationDescription)
+```
+If we run the str or table function on `top5` now, you should see that `LocationDescription` now only has 5 values, as we expect.
+
+Use the `top5` data frame to answer the remaining questions.  
+**One of the locations has a much higher arrest rate than the other locations. Which is it?**
+```{r}
+sort(tapply(top5$Arrest, top5$LocationDescription, mean), decreasing = TRUE)[1]
+```
+**Ans**: `GAS STATION`
+
+**On which day of the week do the most motor vehicle thefts at gas stations happen?**
+```{r}
+sort(table(top5[top5$LocationDescription == "GAS STATION",]$Weekday), decreasing=TRUE)[1]
+```
+
