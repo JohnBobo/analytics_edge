@@ -348,10 +348,91 @@ auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
 #### Problem 3.1 - A "Smart Baseline"
 
 (1 point possible)
-In the [previous problem](), we built a logistic regression model that has an AUC significantly higher than the AUC of 0.5 that would be obtained by randomly ordering observations.
+In the [previous problem](https://github.com/JohnBobo/analytics_edge/blob/master/predicting_parole_violators/predicting_parole_violators.md), we built a logistic regression model that has an AUC significantly higher than the AUC of 0.5 that would be obtained by randomly ordering observations.
 
 However, LendingClub.com assigns the interest rate to a loan based on their estimate of that loan's risk. This variable, int.rate, is an independent variable in our dataset. In this part, we will investigate using the loan's interest rate as a "smart baseline" to order the loans according to risk.
 
 Using the training set, build a bivariate logistic regression model (aka a logistic regression model with a single independent variable) that predicts the dependent variable not.fully.paid using only the variable int.rate.
 
+```r
+bi_log_reg <- glm(not.fully.paid ~ int.rate, data = train, family='binomial')
+summary(bi_log_reg)
+```
+
+```
+## 
+## Call:
+## glm(formula = not.fully.paid ~ int.rate, family = "binomial", 
+##     data = train)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.055  -0.627  -0.544  -0.436   2.291  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)   -3.673      0.169   -21.8   <2e-16 ***
+## int.rate      15.921      1.270    12.5   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 5896.6  on 6704  degrees of freedom
+## Residual deviance: 5734.8  on 6703  degrees of freedom
+## AIC: 5739
+## 
+## Number of Fisher Scoring iterations: 4
+```
+
 The variable int.rate is highly significant in the bivariate model, but it is not significant at the 0.05 level in the model trained with all the independent variables. What is the most likely explanation for this difference?
+
+**Answer:**  `int.rate` is correlated with other risk-related variables, and therefore does not incrementally improve the model when those other variables are included. 
+
+***
+
+#### Problem 3.2 - A "Smart Baseline"
+
+(2 points possible)
+Make test set predictions for the bivariate model. What is the highest predicted probability of a loan not being paid in full on the testing set?
+
+```r
+bi_pred <- predict(bi_log_reg, newdata=test, type='response')
+answer <- max(bi_pred)
+```
+**Answer:** 0.427
+
+With a logistic regression cutoff of 0.5, how many loans would be predicted as not being paid in full on the testing set?  
+**Answer:** 0, because the highest predicted probability above is less than 0.5.
+
+
+***
+
+#### Problem 3.3 - A "Smart Baseline"
+
+(1 point possible)
+What is the test set AUC of the bivariate model?
+
+```r
+rocr_pred <- prediction(bi_pred, test$not.fully.paid)
+rocr_perf <- performance(rocr_pred, "tpr", "fpr")
+plot(rocr_perf, colorize = TRUE)
+```
+
+![](predicting_loan_repayment_files/figure-html/unnamed-chunk-10-1.png)
+
+```r
+auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
+```
+**Answer:** 0.624.
+
+***
+
+#### Problem 4.1 - Computing the Profitability of an Investment
+
+(1 point possible)
+While thus far we have predicted if a loan will be paid back or not, an investor needs to identify loans that are expected to be profitable. If the loan is paid back in full, then the investor makes interest on the loan. However, if the loan is not paid back, the investor loses the money invested. Therefore, the investor should seek loans that best balance this risk and reward.
+
+To compute interest revenue, consider a $c investment in a loan that has an annual interest rate r over a period of t years. Using continuous compounding of interest, this investment pays back c * exp(rt) dollars by the end of the t years, where exp(rt) is e raised to the r*t power.
+
+How much does a $10 investment with an annual interest rate of 6% pay back after 3 years, using continuous compounding of interest? Hint: remember to convert the percentage to a proportion before doing the math. Enter the number of dollars, without the $ sign.
