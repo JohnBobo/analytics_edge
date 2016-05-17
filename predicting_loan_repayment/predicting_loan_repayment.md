@@ -1,5 +1,5 @@
 # Predicting Loan Repayment
-By John Bobo based on a problem set from MIT’s Analytics Edge MOOC  
+Solutions by John Bobo based on a problem set from MIT’s Analytics Edge MOOC  
 May 15, 2016  
 
 
@@ -433,6 +433,121 @@ auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
 (1 point possible)
 While thus far we have predicted if a loan will be paid back or not, an investor needs to identify loans that are expected to be profitable. If the loan is paid back in full, then the investor makes interest on the loan. However, if the loan is not paid back, the investor loses the money invested. Therefore, the investor should seek loans that best balance this risk and reward.
 
-To compute interest revenue, consider a $c investment in a loan that has an annual interest rate r over a period of t years. Using continuous compounding of interest, this investment pays back c * exp(rt) dollars by the end of the t years, where exp(rt) is e raised to the r*t power.
+To compute interest revenue, consider a $c investment in a loan that has an annual interest rate r over a period of t years. Using continuous compounding of interest, this investment pays back $ce^{rt}$ dollars by the end of the $t$ years.
 
 How much does a $10 investment with an annual interest rate of 6% pay back after 3 years, using continuous compounding of interest? Hint: remember to convert the percentage to a proportion before doing the math. Enter the number of dollars, without the $ sign.
+
+```r
+answer <- 10*exp(.06*3)
+```
+**Answer:** 11.97
+
+***
+
+#### Problem 4.2 - Computing the Profitability of an Investment
+
+(1 point possible)
+While the investment has value $ce^{rt}$ dollars after collecting interest, the investor had to pay $c for the investment. What is the profit to the investor if the investment is paid back in full?  
+
+**Answer:** $c (e^{rt} - 1)$
+
+***
+
+#### Problem 4.3 - Computing the Profitability of an Investment
+
+(1 point possible)
+Now, consider the case where the investor made a $c investment, but it was not paid back in full. Assume, conservatively, that no money was received from the borrower (often a lender will receive some but not all of the value of the loan, making this a pessimistic assumption of how much is received). What is the profit to the investor in this scenario?
+
+**Answer:** $-c$.
+
+***
+
+#### Problem 5.1 - A Simple Investment Strategy
+
+(2 points possible)
+In the previous subproblem, we concluded that an investor who invested $c$ dollars in a loan with interest rate $r$ for $t$ years makes $c(e^{rt}-1)$ dollars of profit if the loan is paid back in full and $-c$ dollars of profit if the loan is not paid back in full (pessimistically).
+
+In order to evaluate the quality of an investment strategy, we need to compute this profit for each loan in the test set. For this variable, we will assume a $1 investment (aka $c = 1$). To create the variable, we first assign to the profit for a fully paid loan, $e^{rt}-1$, to every observation, and we then replace this value with -1 in the cases where the loan was not paid in full. All the loans in our dataset are 3-year loans, meaning $t = 3$ in our calculations. Enter the following commands in your R console to create this new variable:
+
+```r
+test$profit = exp(test$int.rate*3) - 1
+
+test$profit[test$not.fully.paid == 1] = -1
+```
+What is the maximum profit of a $10 investment in any loan in the testing set (do not include the $ sign in your answer)?
+
+```r
+answer <- 10 * max(test$profit)
+```
+**Answer:** 8.895.
+
+***
+
+#### Problem 6.1 - An Investment Strategy Based on Risk
+
+(4 points possible)
+A simple investment strategy of equally investing in all the loans would yield profit $20.94 for a $100 investment. But this simple investment strategy does not leverage the prediction model we built earlier in this problem. As stated earlier, investors seek loans that balance reward with risk, in that they simultaneously have high interest rates and a low risk of not being paid back.
+
+To meet this objective, we will analyze an investment strategy in which the investor only purchases loans with a high interest rate (a rate of at least 15%), but amongst these loans selects the ones with the lowest predicted risk of not being paid back in full. We will model an investor who invests $1 in each of the most promising 100 loans.
+
+First, use the subset() function to build a data frame called highInterest consisting of the test set loans with an interest rate of at least 15%.
+
+```r
+highInterest <- subset(test, int.rate >= .15)
+```
+
+What is the average profit of a $1 investment in one of these high-interest loans (do not include the $ sign in your answer)?
+
+```r
+answer <- mean(highInterest$profit)
+```
+**Answer:** 0.225
+
+What proportion of the high-interest loans were not paid back in full? 
+
+```r
+answer <- mean(highInterest$not.fully.paid)
+```
+**Answer:** 0.252
+
+***
+
+#### Problem 6.2 - An Investment Strategy Based on Risk
+
+(4 points possible)
+Next, we will determine the 100th smallest predicted probability of not paying in full by sorting the predicted risks in increasing order and selecting the 100th element of this sorted list. Find the highest predicted risk that we will include by typing the following command into your R console:
+
+```r
+cutoff <- sort(highInterest$predicted.risk, decreasing=FALSE)[100]
+```
+Use the subset() function to build a data frame called selectedLoans consisting of the high-interest loans with predicted risk not exceeding the cutoff we just computed. Check to make sure you have selected 100 loans for investment.
+
+```r
+selectedLoans <- subset(highInterest, predicted.risk <= cutoff)
+```
+
+What is the profit of the investor, who invested $1 in each of these 100 loans (do not include the $ sign in your answer)?
+
+```r
+answer <- sum(selectedLoans$profit)
+```
+**Answer:** 31.28
+
+How many of 100 selected loans were not paid back in full?
+
+```r
+table(selectedLoans$not.fully.paid)
+```
+
+```
+## 
+##  0  1 
+## 81 19
+```
+**Answer:** 19
+
+#### Conclusion 
+
+We have now seen how analytics can be used to select a subset of the high-interest loans that were paid back at only a slightly lower rate than average, resulting in a significant increase in the profit from our investor's $100 investment. Although the logistic regression models developed in this problem did not have large AUC values, we see that they still provided the edge needed to improve the profitability of an investment portfolio.
+
+We conclude with a note of warning. Throughout this analysis we assume that the loans we invest in will perform in the same way as the loans we used to train our model, even though our training set covers a relatively short period of time. If there is an economic shock like a large financial downturn, default rates might be significantly higher than those observed in the training set and we might end up losing money instead of profiting. Investors must pay careful attention to such risk when making investment decisions.
