@@ -323,5 +323,156 @@ varImpPlot(censusRF)
 
 ***
 
-#### 
+#### Problem 4.1 - Selecting cp by Cross-Validation
 
+(1 point possible)
+We now conclude our study of this data set by looking at how CART behaves with different choices of its parameters.
+
+Let us select the cp parameter for our CART model using k-fold cross validation, with k = 10 folds. Do this by using the train function. Set the seed beforehand to 2. Test cp values from 0.002 to 0.1 in 0.002 increments, by using the following command:
+
+```r
+library(caret)
+```
+
+```
+## Loading required package: lattice
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```
+## 
+## Attaching package: 'ggplot2'
+```
+
+```
+## The following object is masked from 'package:randomForest':
+## 
+##     margin
+```
+
+```r
+set.seed(2)
+
+numFolds <- trainControl( method = "cv", number = 10)
+cartGrid <- expand.grid( .cp = seq(0.002,0.1,0.002))
+```
+Also, remember to use the entire training set "train" when building this model. The train function might take some time to run.
+
+```r
+train(over50k ~ ., data=train, method='rpart', 
+                    trControl=numFolds, tuneGrid=cartGrid)
+```
+
+```
+## CART 
+## 
+## 19187 samples
+##    12 predictor
+##     2 classes: ' <=50K', ' >50K' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 17268, 17269, 17268, 17268, 17269, 17269, ... 
+## Resampling results across tuning parameters:
+## 
+##   cp     Accuracy  Kappa 
+##   0.002  0.852     0.5576
+##   0.004  0.848     0.5535
+##   0.006  0.844     0.5339
+##   0.008  0.844     0.5344
+##   0.010  0.844     0.5357
+##   0.012  0.844     0.5357
+##   0.014  0.844     0.5357
+##   0.016  0.843     0.5312
+##   0.018  0.841     0.5140
+##   0.020  0.840     0.5061
+##   0.022  0.839     0.5018
+##   0.024  0.839     0.5018
+##   0.026  0.839     0.5018
+##   0.028  0.839     0.5018
+##   0.030  0.839     0.5018
+##   0.032  0.839     0.5018
+##   0.034  0.837     0.4888
+##   0.036  0.832     0.4636
+##   0.038  0.827     0.4386
+##   0.040  0.825     0.4302
+##   0.042  0.825     0.4302
+##   0.044  0.825     0.4302
+##   0.046  0.822     0.4130
+##   0.048  0.822     0.4130
+##   0.050  0.822     0.4130
+##   0.052  0.815     0.3563
+##   0.054  0.813     0.3256
+##   0.056  0.812     0.3079
+##   0.058  0.812     0.3079
+##   0.060  0.812     0.3079
+##   0.062  0.812     0.3079
+##   0.064  0.810     0.2954
+##   0.066  0.810     0.2954
+##   0.068  0.801     0.2462
+##   0.070  0.796     0.2147
+##   0.072  0.796     0.2147
+##   0.074  0.796     0.2147
+##   0.076  0.773     0.0786
+##   0.078  0.759     0.0000
+##   0.080  0.759     0.0000
+##   0.082  0.759     0.0000
+##   0.084  0.759     0.0000
+##   0.086  0.759     0.0000
+##   0.088  0.759     0.0000
+##   0.090  0.759     0.0000
+##   0.092  0.759     0.0000
+##   0.094  0.759     0.0000
+##   0.096  0.759     0.0000
+##   0.098  0.759     0.0000
+##   0.100  0.759     0.0000
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was cp = 0.002.
+```
+
+*Which value of cp does the train function recommend?*  
+
+**Answer:** cp = 0.002
+
+***
+
+#### Problem 4.2 - Selecting cp by Cross-Validation
+
+(2 points possible)
+Fit a CART model to the training data using this value of cp. *What is the prediction accuracy on the test set?*
+
+```r
+tree <- rpart(over50k ~ ., data=train, method='class', cp=0.002)
+
+predTest <- predict(tree, newdata=test, type='class')
+table(test$over50k, predTest)
+```
+
+```
+##         predTest
+##           <=50K  >50K
+##    <=50K   9178   535
+##    >50K    1240  1838
+```
+**Answer:** 0.861
+
+***
+
+#### Problem 4.3 - Selecting cp by Cross-Validation
+
+(1 point possible)
+Compared to the original accuracy using the default value of cp, this new CART model is an improvement, and so we should clearly favor this new model over the old one -- or should we? Plot the CART tree for this model. *How many splits are there?*
+
+```r
+prp(tree)
+```
+
+![](predicting_earnings_from_census_data_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+**Answer:** 18.
+
+This highlights one important tradeoff in building predictive models. By tuning cp, we improved our accuracy by over 1%, but our tree became significantly more complicated. In some applications, such an improvement in accuracy would be worth the loss in interpretability. In others, we may prefer a less accurate model that is simpler to understand and describe over a more accurate -- but more complicated -- model.

@@ -242,5 +242,53 @@ varImpPlot(censusRF)
 
 ***
 
-#### 
+#### Problem 4.1 - Selecting cp by Cross-Validation
 
+(1 point possible)
+We now conclude our study of this data set by looking at how CART behaves with different choices of its parameters.
+
+Let us select the cp parameter for our CART model using k-fold cross validation, with k = 10 folds. Do this by using the train function. Set the seed beforehand to 2. Test cp values from 0.002 to 0.1 in 0.002 increments, by using the following command:
+```{r}
+library(caret)
+set.seed(2)
+
+numFolds <- trainControl( method = "cv", number = 10)
+cartGrid <- expand.grid( .cp = seq(0.002,0.1,0.002))
+```
+Also, remember to use the entire training set "train" when building this model. The train function might take some time to run.
+```{r}
+train(over50k ~ ., data=train, method='rpart', 
+                    trControl=numFolds, tuneGrid=cartGrid)
+```
+
+*Which value of cp does the train function recommend?*  
+
+**Answer:** cp = 0.002
+
+***
+
+#### Problem 4.2 - Selecting cp by Cross-Validation
+
+(2 points possible)
+Fit a CART model to the training data using this value of cp. *What is the prediction accuracy on the test set?*
+```{r}
+tree <- rpart(over50k ~ ., data=train, method='class', cp=0.002)
+
+predTest <- predict(tree, newdata=test, type='class')
+table(test$over50k, predTest)
+```
+**Answer:** `r (9178 + 1838)/nrow(test)`
+
+***
+
+#### Problem 4.3 - Selecting cp by Cross-Validation
+
+(1 point possible)
+Compared to the original accuracy using the default value of cp, this new CART model is an improvement, and so we should clearly favor this new model over the old one -- or should we? Plot the CART tree for this model. *How many splits are there?*
+```{r}
+prp(tree)
+```
+
+**Answer:** 18.
+
+This highlights one important tradeoff in building predictive models. By tuning cp, we improved our accuracy by over 1%, but our tree became significantly more complicated. In some applications, such an improvement in accuracy would be worth the loss in interpretability. In others, we may prefer a less accurate model that is simpler to understand and describe over a more accurate -- but more complicated -- model.
