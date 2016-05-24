@@ -31,8 +31,109 @@ The dataset includes the following 13 variables:
 
 Let's begin by building a logistic regression model to predict whether an individual's earnings are above $50,000 (the variable "over50k") using all of the other variables as independent variables. First, read the dataset census.csv into R.
 
+```r
+census <- read.csv("/Users/johnbobo/analytics_edge/data/census.csv")
+```
+
 Then, split the data randomly into a training set and a testing set, setting the seed to 2000 before creating the split. Split the data so that the training set contains 60% of the observations, while the testing set contains 40% of the observations.
+
+```r
+library(caTools)
+set.seed(2000)
+
+spl <- sample.split(census$over50k, SplitRatio = 0.6)
+train <- subset(census, spl == TRUE)
+test <- subset(census, spl == FALSE)
+```
 
 Next, build a logistic regression model to predict the dependent variable "over50k", using all of the other variables in the dataset as independent variables. Use the training set to build the model.
 
-Which variables are significant, or have factors that are significant? (Use 0.1 as your significance threshold, so variables with a period or dot in the stars column should be counted too. You might see a warning message here - you can ignore it and proceed. This message is a warning that we might be overfitting our model to the training set.) Select all that apply.
+```r
+logReg <- glm(over50k ~ ., data=train, family='binomial')
+```
+
+```
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+```
+
+*Which variables are significant, or have factors that are significant?*  
+
+**Answer:** By looking at `summary(logReg)` you find the following are significant:  age,   workclass,   education,   maritalstatus,   occupation,   relationship,  sex,  capitalgain,   capitalloss,   and hoursperweek. 
+
+***
+
+#### Problem 1.2 - A Logistic Regression Model
+
+(2 points possible)
+*What is the accuracy of the model on the testing set? Use a threshold of 0.5.*
+
+```r
+predLog <- predict(logReg, newdata=test, type='response')
+```
+
+```
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
+## ifelse(type == : prediction from a rank-deficient fit may be misleading
+```
+
+```r
+table(test$over50k, predLog >= 0.5)
+```
+
+```
+##         
+##          FALSE TRUE
+##    <=50K  9051  662
+##    >50K   1190 1888
+```
+**Answer:** 0.855
+
+***
+
+#### Problem 1.3 - A Logistic Regression Model
+
+(1 point possible)
+*What is the baseline accuracy for the testing set?*
+
+```r
+table(test$over50k)
+```
+
+```
+## 
+##  <=50K   >50K 
+##   9713   3078
+```
+**Answer:** For our baseline we'll assume nobody makes over 50k.  That gives us an accuracy of 0.759
+
+***
+
+#### Problem 1.4 - A Logistic Regression Model
+
+(2 points possible)
+*What is the area-under-the-curve (AUC) for this model on the test set?*
+
+```r
+library(ROCR)
+```
+
+```
+## Loading required package: gplots
+```
+
+```
+## 
+## Attaching package: 'gplots'
+```
+
+```
+## The following object is masked from 'package:stats':
+## 
+##     lowess
+```
+
+```r
+rocr_pred <- prediction(predLog, test$over50k)
+auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
+```
+**Answer:** 0.906
