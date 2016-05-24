@@ -240,4 +240,88 @@ auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
 
 ***
 
-####
+#### Problem 3.1 - A Random Forest Model
+
+(2 points possible)
+Before building a random forest model, we'll down-sample our training set. While some modern personal computers can build a random forest model on the entire training set, others might run out of memory when trying to train the model since random forests is much more computationally intensive than CART or Logistic Regression. For this reason, before continuing we will define a new training set to be used when building our random forest model, that contains 2000 randomly selected obervations from the original training set. Do this by running the following commands in your R console (assuming your training set is called "train"):
+
+```r
+set.seed(1)
+
+trainSmall <- train[sample(nrow(train), 2000), ]
+```
+Let us now build a random forest model to predict "over50k", using the dataset "trainSmall" as the data used to build the model. Set the seed to 1 again right before building the model, and use all of the other variables in the dataset as independent variables.
+
+```r
+library(randomForest)
+```
+
+```
+## randomForest 4.6-12
+```
+
+```
+## Type rfNews() to see new features/changes/bug fixes.
+```
+
+```r
+set.seed(1)
+censusRF <- randomForest(over50k ~ ., data=trainSmall)
+```
+Then, make predictions using this model on the entire test set. *What is the accuracy of the model on the test set?* 
+
+```r
+forestPred <- predict(censusRF, newdata=test)
+table(test$over50k, forestPred)
+```
+
+```
+##         forestPred
+##           <=50K  >50K
+##    <=50K   9586   127
+##    >50K    1985  1093
+```
+**Answer:** 0.835
+
+***
+
+#### Problem 3.2 - A Random Forest Model
+
+(1 point possible)
+As we discussed in lecture, random forest models work by building a large collection of trees. As a result, we lose some of the interpretability that comes with CART in terms of seeing how predictions are made and which variables are important. However, we can still compute metrics that give us insight into which variables are important.
+
+One metric that we can look at is the number of times, aggregated over all of the trees in the random forest model, that a certain variable is selected for a split. To view this metric, run the following lines of R code:
+
+```r
+vu <- varUsed(censusRF, count=TRUE)
+
+vusorted <- sort(vu, decreasing = FALSE, index.return = TRUE)
+
+dotchart(vusorted$x, names(censusRF$forest$xlevels[vusorted$ix]))
+```
+
+![](predicting_earnings_from_census_data_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+This code produces a chart that for each variable measures the number of times that variable was selected for splitting (the value on the x-axis). *Which variable is the most important in terms of the number of splits?*  
+
+**Answer:** `age`.
+
+***
+
+#### Problem 3.3 - A Random Forest Model
+
+(1 point possible)
+A different metric we can look at is related to "impurity", which measures how homogenous each bucket or leaf of the tree is. In each tree in the forest, whenever we select a variable and perform a split, the impurity is decreased. Therefore, one way to measure the importance of a variable is to average the reduction in impurity, taken over all the times that variable is selected for splitting in all of the trees in the forest. 
+
+```r
+varImpPlot(censusRF)
+```
+
+![](predicting_earnings_from_census_data_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+*Which of the variables is the most important in terms of mean reduction in impurity?*  
+
+**Answer:** `occupation`.
+
+***
+
+#### 
+
