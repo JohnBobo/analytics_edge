@@ -98,3 +98,91 @@ rocr_pred <- prediction(predLog, test$over50k)
 auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
 ```
 **Answer:** `r auc`
+
+***
+
+#### Problem 2.1 - A CART Model
+
+(2 points possible)
+We have just seen how the logistic regression model for this data achieves a high accuracy. Moreover, the significances of the variables give us a way to gauge which variables are relevant for this prediction task. However, it is not immediately clear which variables are more important than the others, especially due to the large number of factor variables in this problem.
+
+Let us now build a classification tree to predict "over50k". Use the training set to build the model, and all of the other variables as independent variables. Use the default parameters, so don't set a value for minbucket or cp. Remember to specify method="class" as an argument to rpart, since this is a classification problem. After you are done building the model, plot the resulting tree.
+```{r}
+library(rpart)
+library(rpart.plot)
+
+tree <- rpart(over50k ~ ., data=train, method='class')
+prp(tree)
+```
+
+*How many splits does the tree have in total?*
+
+**Answer:** 4.
+
+***
+
+#### Problem 2.2 - A CART Model
+
+(1 point possible)
+*Which variable does the tree split on at the first level (the very first split of the tree)?*  
+
+**Answer:** `relationship`
+
+***
+
+#### Problem 2.3 - A CART Model
+
+(1 point possible)
+*Which variables does the tree split on at the second level (immediately after the first split of the tree)? Select all that apply.*  
+
+**Answer:** `capitalgain` and `education`.
+
+***
+
+#### Problem 2.4 - A CART Model
+
+(2 points possible)
+*What is the accuracy of the model on the testing set?*
+```{r}
+predTree <- predict(tree, newdata=test, type='class')
+table(test$over50k, predTree)
+```
+**Answer:** `r (9243 + 1596)/nrow(test)`
+
+This highlights a very regular phenomenon when comparing CART and logistic regression. CART often performs a little worse than logistic regression in out-of-sample accuracy. However, as is the case here, the CART model is often much simpler to describe and understand.
+
+***
+
+#### Problem 2.5 - A CART Model
+
+(1 point possible)
+Let us now consider the ROC curve and AUC for the CART model on the test set. You will need to get predicted probabilities for the observations in the test set to build the ROC curve and compute the AUC. Remember that you can do this by removing the type="class" argument when making predictions, and taking the second column of the resulting object.
+
+Plot the ROC curve for the CART model you have estimated. Observe that compared to the logistic regression ROC curve, the CART ROC curve is less smooth than the logistic regression ROC curve. Which of the following explanations for this behavior is most correct? 
+```{r}
+predTree <- predict(tree, newdata=test)
+rocr_pred <- prediction(predTree[,2], test$over50k)
+rocr_perf <- performance(rocr_pred, "tpr", "fpr")
+```
+
+Plot the ROC curve for the CART model you have estimated. Observe that compared to the logistic regression ROC curve, the CART ROC curve is less smooth than the logistic regression ROC curve. *Which of the following explanations for this behavior is most correct?*
+```{r}
+plot(rocr_perf, colorize = TRUE)
+```
+
+**Answer:**  The probabilities from the CART model take only a handful of values (five, one for each end bucket/leaf of the tree); the changes in the ROC curve correspond to setting the threshold to one of those values. 
+
+***
+
+#### Problem 2.6 - A CART Model
+
+(2 points possible)
+*What is the AUC of the CART model on the test set?*
+```{r}
+auc <- as.numeric(performance(rocr_pred, "auc")@y.values)
+```
+**Answer:** `r auc`
+
+***
+
+####
