@@ -132,3 +132,103 @@ table(test$isB, predForest)
 **Answer:** 0.988
 
 ***
+#### Problem 2.1 - Predicting the letters A, B, P, R
+
+(2 points possible)
+Let us now move on to the problem that we were originally interested in, which is to predict whether or not a letter is one of the four letters A, B, P or R.
+
+As we saw in the D2Hawkeye lecture, building a multiclass classification CART model in R is no harder than building the models for binary classification problems. Fortunately, building a random forest model is just as easy.
+
+The variable in our data frame which we will be trying to predict is "letter". Start by converting letter in the original data set (letters) to a factor by running the following command in R:
+
+```r
+letters$letter <- as.factor( letters$letter )
+```
+Now, generate new training and testing sets of the letters data frame using letters$letter as the first input to the sample.split function. Before splitting, set your seed to 2000. Again put 50% of the data in the training set. (Why do we need to split the data again? Remember that sample.split balances the outcome variable in the training and testing sets. With a new outcome variable, we want to re-generate our split.)
+
+```r
+set.seed(2000)
+
+spl <- sample.split(letters$letter, SplitRatio = 0.5)
+train <- subset(letters, spl == TRUE)
+test <- subset(letters, spl == FALSE)
+```
+
+In a multiclass classification problem, a simple baseline model is to predict the most frequent class of all of the options.
+
+```r
+sort(table(test$letter), decreasing=TRUE)
+```
+
+```
+## 
+##   P   A   B   R 
+## 401 395 383 379
+```
+
+*What is the baseline accuracy on the testing set?*  
+
+**Answer:** Predicting `P` everytime yields an accuravcy of 0.257
+
+***
+
+####Problem 2.2 - Predicting the letters A, B, P, R
+
+(2 points possible)
+Now build a classification tree to predict "letter", using the training set to build your model. You should use all of the other variables as independent variables, except "isB", since it is related to what we are trying to predict! Just use the default parameters in your CART model. Add the argument method="class" since this is a classification problem. Even though we have multiple classes here, nothing changes in how we build the model from the binary case.
+
+```r
+cartLetter <- rpart(letter ~ . -isB, data=train, method='class')
+prp(cartLetter)
+```
+
+![](letter_recognition_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+*What is the test set accuracy of your CART model? Use the argument type="class" when making predictions.*
+
+```r
+predCART <- predict(cartLetter, newdata=test, type='class')
+table(test$letter, predCART)
+```
+
+```
+##    predCART
+##       A   B   P   R
+##   A 348   4   0  43
+##   B   8 318  12  45
+##   P   2  21 363  15
+##   R  10  24   5 340
+```
+**Answer:** 0.879
+
+***
+
+#### Problem 2.3 - Predicting the letters A, B, P, R
+
+(2 points possible)
+Now build a random forest model on the training data, using the same independent variables as in the previous problem -- again, don't forget to remove the isB variable. Just use the default parameter values for ntree and nodesize (you don't need to include these arguments at all). Set the seed to 1000 right before building your model. (Remember that you might get a slightly different result even if you set the random seed.)
+
+```r
+set.seed(1000)
+
+forestLetter <- randomForest(letter ~ . -isB, data=train, method='class')
+```
+
+*What is the test set accuracy of your random forest model?*
+
+```r
+predForest <- predict(forestLetter, newdata=test, type='class')
+table(test$letter, predForest)
+```
+
+```
+##    predForest
+##       A   B   P   R
+##   A 390   0   3   2
+##   B   0 380   1   2
+##   P   0   5 393   3
+##   R   3  12   0 364
+```
+**Answer:** 0.98
+
+You should find this value rather striking, for several reasons. The first is that it is significantly higher than the value for CART, highlighting the gain in accuracy that is possible from using random forest models. The second is that while the accuracy of CART decreased significantly as we transitioned from the problem of predicting B/not B (a relatively simple problem) to the problem of predicting the four letters (certainly a harder problem), the accuracy of the random forest model decreased by a tiny amount.
