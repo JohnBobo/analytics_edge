@@ -23,3 +23,218 @@ As a result of this preprocessing, some common processing tasks have already bee
 - Removed = The _unique_ words removed.
 
 Notice the repeated use of _unique_. The data we have available is not the traditional bag of words - rather it is the set of words that were removed or added. For example, if a word was removed multiple times in a revision it will only appear one time in the "Removed" column.
+
+#### Problem 1.1 - Bags of Words
+
+(1 point possible)
+Load the data wiki.csv with the option stringsAsFactors=FALSE, calling the data frame "wiki". Convert the "Vandal" column to a factor using the command wiki$Vandal = as.factor(wiki$Vandal).
+
+```r
+wiki <- read.csv("/Users/johnbobo/analytics_edge/data/wiki.csv", stringsAsFactors = FALSE)
+
+wiki$Vandal <- as.factor(wiki$Vandal)
+```
+
+*How many cases of vandalism were detected in the history of this page?*
+
+```r
+table(wiki$Vandal)
+```
+
+```
+## 
+##    0    1 
+## 2061 1815
+```
+**Answer:** 1815.
+
+***
+
+#### Problem 1.2 - Bags of Words
+
+(2 points possible)
+We will now use the bag of words approach to build a model. We have two columns of textual data, with different meanings. For example, adding rude words has a different meaning to removing rude words. We'll start like we did in class by building a document term matrix from the Added column. The text already is lowercase and stripped of punctuation. So to pre-process the data, just complete the following four steps:
+
+1) Create the corpus for the Added column, and call it "corpusAdded".
+
+```r
+library(tm)
+```
+
+```
+## Loading required package: NLP
+```
+
+```r
+corpusAdded <- Corpus(VectorSource(wiki$Added))
+```
+
+2) Remove the English-language stopwords.
+
+```r
+corpusAdded <- tm_map(corpusAdded, removeWords, stopwords('english'))
+```
+
+3) Stem the words.
+
+```r
+corpusAdded <- tm_map(corpusAdded, stemDocument)
+```
+
+4) Build the DocumentTermMatrix, and call it dtmAdded.
+
+```r
+dtmAdded <- DocumentTermMatrix(corpusAdded)
+```
+
+*How many terms appear in dtmAdded?*
+
+```r
+dtmAdded
+```
+
+```
+## <<DocumentTermMatrix (documents: 3876, terms: 6675)>>
+## Non-/sparse entries: 15368/25856932
+## Sparsity           : 100%
+## Maximal term length: 784
+## Weighting          : term frequency (tf)
+```
+**Answer:** 6675
+
+***
+
+#### Problem 1.3 - Bags of Words
+
+(1 point possible)
+Filter out sparse terms by keeping only terms that appear in 0.3% or more of the revisions, and call the new matrix sparseAdded. *How many terms appear in sparseAdded?*
+
+```r
+sparseAdded <- removeSparseTerms(dtmAdded, .997)
+sparseAdded
+```
+
+```
+## <<DocumentTermMatrix (documents: 3876, terms: 166)>>
+## Non-/sparse entries: 2681/640735
+## Sparsity           : 100%
+## Maximal term length: 28
+## Weighting          : term frequency (tf)
+```
+**Answer:** 166
+
+***
+
+#### Problem 1.4 - Bags of Words
+
+(2 points possible)
+Convert sparseAdded to a data frame called wordsAdded, and then prepend all the words with the letter A.
+
+```r
+wordsAdded <- as.data.frame(as.matrix(sparseAdded))
+
+colnames(wordsAdded) = paste("A", colnames(wordsAdded))
+```
+Now repeat all of the steps we've done so far (create a corpus, remove stop words, stem the document, create a sparse document term matrix, and convert it to a data frame) to create a Removed bag-of-words dataframe, called wordsRemoved, except this time, prepend all of the words with the letter R:
+
+```r
+corpusRemoved <- Corpus(VectorSource(wiki$Removed))
+corpusRemoved <- tm_map(corpusRemoved, removeWords, stopwords('english'))
+corpusRemoved <- tm_map(corpusRemoved, stemDocument)
+dtmRemoved <- DocumentTermMatrix(corpusRemoved)
+sparseRemoved <- removeSparseTerms(dtmRemoved, .997)
+wordsRemoved <- as.data.frame(as.matrix(sparseRemoved))
+
+colnames(wordsRemoved) = paste("R", colnames(wordsRemoved))
+```
+*How many words are in the wordsRemoved data frame?*  
+
+**Answer:** 162
+
+***
+
+#### Problem 1.5 - Bags of Words
+
+(2 points possible)
+Combine the two data frames into a data frame called wikiWords.
+
+```r
+wikiWords <- cbind(wordsAdded, wordsRemoved)
+```
+Then add the Vandal column. 
+
+```r
+wikiWords$Vandal <- wiki$Vandal
+```
+Set the random seed to 123 and then split the data set using sample.split from the "caTools" package to put 70% in the training set.
+
+```r
+library(caTools)
+set.seed(123)
+
+spl <- sample.split(wikiWords$Vandal, SplitRatio = 0.7)
+train <- subset(wikiWords, spl == TRUE)
+test <- subset(wikiWords, spl == FALSE)
+```
+
+*What is the accuracy on the test set of a baseline method that always predicts "not vandalism" (the most frequent outcome)?*
+
+```r
+baseline_accuracy <- mean(test$Vandal == '0')
+```
+**Answer:** 0.531
+
+***
+
+#### Problem 1.6 - Bags of Words
+
+(2 points possible)
+Build a CART model to predict Vandal, using all of the other variables as independent variables. Use the training set to build the model and the default parameters (don't set values for minbucket or cp).
+
+```r
+library(rpart)
+library(rpart.plot)
+
+wikiCART <- rpart(Vandal ~ ., data=train, method='class')
+```
+
+*What is the accuracy of the model on the test set, using a threshold of 0.5? (Remember that if you add the argument type="class" when making predictions, the output of predict will automatically use a threshold of 0.5.)*
+
+```r
+predCART <- predict(wikiCART, newdata=test, type='class')
+table(test$Vandal, predCART)
+```
+
+```
+##    predCART
+##       0   1
+##   0 618   0
+##   1 533  12
+```
+**Answer:** 0.542
+
+***
+
+#### Problem 1.7 - Bags of Words
+
+(1 point possible)
+Plot the CART tree. *How many word stems does the CART model use?*
+
+```r
+prp(wikiCART)
+```
+
+![](detecting_vandalism_on_wikipedia_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+
+**Answer:** 2 words.
+
+***
+
+#### Problem 1.8 - Bags of Words
+
+(1 point possible)
+*Given the performance of the CART model relative to the baseline, what is the best explanation of these results?*
+
+**Answer:** Although it beats the baseline, bag of words is not very predictive for this problem.
+
+***
