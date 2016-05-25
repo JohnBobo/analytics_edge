@@ -21,6 +21,11 @@ This repo contains work I did while following the [Analytics Edge MOOC](https://
 * [Predicting Loan Repayment](https://github.com/JohnBobo/analytics_edge/tree/master/predicting_loan_repayment)
 
 #### Trees
-* [Understanding Why People Vote]
-* [Letter Recognition]
-* [Predicted Earnings From Census Data]
+* [Understanding Why People Vote](https://github.com/JohnBobo/analytics_edge/tree/master/understanding_why_people_vote)
+* [Letter Recognition](https://github.com/JohnBobo/analytics_edge/tree/master/letter_recognition)
+* [Predicted Earnings From Census Data](https://github.com/JohnBobo/analytics_edge/tree/master/predicting_earnings_from_census_data)
+
+#### Text Analytics
+* [Detecting Vandalism on Wikipedia]
+* [Automating Reviews in Medicine]
+* [Separating Spam from Ham]
