@@ -109,12 +109,32 @@ colnames(wordsAdded) = paste("A", colnames(wordsAdded))
 ```
 Now repeat all of the steps we've done so far (create a corpus, remove stop words, stem the document, create a sparse document term matrix, and convert it to a data frame) to create a Removed bag-of-words dataframe, called wordsRemoved, except this time, prepend all of the words with the letter R:
 ```{r}
-corpusRemoved <- Corpus(VectorSource(wiki$Removed))
-corpusRemoved <- tm_map(corpusRemoved, removeWords, stopwords('english'))
-corpusRemoved <- tm_map(corpusRemoved, stemDocument)
-dtmRemoved <- DocumentTermMatrix(corpusRemoved)
-sparseRemoved <- removeSparseTerms(dtmRemoved, .997)
-wordsRemoved <- as.data.frame(as.matrix(sparseRemoved))
+vectorToCorpusDF <-function(data, sparse){
+    corpus = Corpus(VectorSource(data))
+    corpus = tm_map(corpus, content_transformer(tolower))
+    corpus = tm_map(corpus, removePunctuation)
+    corpus = tm_map(corpus, removeWords, stopwords('english'))
+    corpus = tm_map(corpus, stemDocument)
+    
+    dtm = DocumentTermMatrix(corpus)
+    dtmSparse = removeSparseTerms(dtm, sparse)
+    df = as.data.frame(as.matrix(dtmSparse))
+    
+    return(df)
+}
+vectorToDTM <-function(data, sparse){
+    corpus = Corpus(VectorSource(data))
+    corpus = tm_map(corpus, content_transformer(tolower))
+    corpus = tm_map(corpus, removePunctuation)
+    corpus = tm_map(corpus, removeWords, stopwords('english'))
+    corpus = tm_map(corpus, stemDocument)
+    
+    dtm = DocumentTermMatrix(corpus)
+    return(dtm)
+}
+
+dtmRemoved <- vectorToDTM(wiki$Removed)
+wordsRemoved <- vectorToCorpusDF(wiki$Removed, .997)
 
 colnames(wordsRemoved) = paste("R", colnames(wordsRemoved))
 ```
@@ -191,5 +211,96 @@ prp(wikiCART)
 *Given the performance of the CART model relative to the baseline, what is the best explanation of these results?*
 
 **Answer:** Although it beats the baseline, bag of words is not very predictive for this problem.
+
+***
+
+#### Problem 2.1 - Problem-specific Knowledge
+
+(1 point possible)
+We weren't able to improve on the baseline using the raw textual information. More specifically, the words themselves were not useful. There are other options though, and in this section we will try two techniques - identifying a key class of words, and counting words.
+
+The key class of words we will use are website addresses. "Website addresses" (also known as URLs - Uniform Resource Locators) are comprised of two main parts. An example would be "http://www.google.com". The first part is the protocol, which is usually "http" (HyperText Transfer Protocol). The second part is the address of the site, e.g. "www.google.com". We have stripped all punctuation so links to websites appear in the data as one word, e.g. "httpwwwgooglecom". We hypothesize that given that a lot of vandalism seems to be adding links to promotional or irrelevant websites, the presence of a web address is a sign of vandalism.
+
+We can search for the presence of a web address in the words added by searching for "http" in the Added column. The grepl function returns TRUE if a string is found in another string, e.g.
+
+`grepl("cat","dogs and cats",fixed=TRUE) # TRUE`
+
+`grepl("cat","dogs and rats",fixed=TRUE) # FALSE`
+
+Create a copy of your dataframe from the previous question:
+```{r}
+wikiWords2 <- wikiWords
+```
+Make a new column in wikiWords2 that is 1 if "http" was in Added:
+```{r}
+wikiWords2$HTTP <- ifelse(grepl("http",wiki$Added,fixed=TRUE), 1, 0)
+```
+*Based on this new column, how many revisions added a link?*
+```{r}
+answer <- sum(wikiWords2$HTTP)
+```
+**Answer:** `r answer`
+
+***
+
+#### Problem 2.2 - Problem-Specific Knowledge
+
+(2 points possible)
+In problem 1.5, you computed a vector called `spl` that identified the observations to put in the training and testing sets. Use that variable (do not recompute it with sample.split) to make new training and testing sets:
+```{r}
+wikiTrain2 <- subset(wikiWords2, spl==TRUE)
+wikiTest2 <- subset(wikiWords2, spl==FALSE)
+```
+Then create a new CART model using this new variable as one of the independent variables.
+```{r}
+wikiCART2 <- rpart(Vandal ~ ., data=wikiTrain2, method='class')
+testPred2 <- predict(wikiCART2, newdata=wikiTest2, type='class')
+prp(wikiCART2)
+```
+
+*What is the new accuracy of the CART model on the test set, using a threshold of 0.5?*
+```{r}
+table(wikiTest2$Vandal, testPred2)
+```
+**Answer:** `r (609 + 57)/nrow(wikiTest2)`
+
+***
+
+#### Problem 2.3 - Problem-Specific Knowledge
+
+(1 point possible)
+Another possibility is that the number of words added and removed is predictive, perhaps more so than the actual words themselves. We already have a word count available in the form of the document-term matrices (DTMs).
+
+Sum the rows of dtmAdded and dtmRemoved and add them as new variables in your data frame wikiWords2 (called NumWordsAdded and NumWordsRemoved) by using the following commands:
+```{r}
+wikiWords2$NumWordsAdded <- rowSums(as.matrix(dtmAdded))
+wikiWords2$NumWordsRemoved <- rowSums(as.matrix(dtmRemoved))
+```
+*What is the average number of words added?*
+```{r}
+answer <- mean(wikiWords2$NumWordsAdded)
+```
+**Answer:** `r answer`
+
+***
+
+#### Problem 2.4 - Problem-Specific Knowledge
+
+(2 points possible)
+In problem 1.5, you computed a vector called "spl" that identified the observations to put in the training and testing sets. Use that variable (do not recompute it with sample.split) to make new training and testing sets with wikiWords2. Create the CART model again (using the training set and the default parameters).
+```{r}
+train <- subset(wikiWords2, spl == TRUE)
+test <- subset(wikiWords2, spl == FALSE)
+
+cart <- rpart(Vandal ~ ., data=train, method='class')
+predTest <- predict(cart, newdata=test, type='class')
+prp(cart)
+```
+
+*What is the new accuracy of the CART model on the test set?*
+```{r}
+table(test$Vandal, predTest)
+```
+**Answer:** `r (514 + 248)/nrow(test)`
 
 ***
