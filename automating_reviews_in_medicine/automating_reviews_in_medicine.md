@@ -1,0 +1,60 @@
+# AUTOMATING REVIEWS IN MEDICINE
+By John Bobo based on a problem set from MIT’s Analytics Edge MOOC  
+May 26, 2016  
+
+
+
+The medical literature is enormous. Pubmed, a database of medical publications maintained by the U.S. National Library of Medicine, has indexed over 23 million medical publications. Further, the rate of medical publication has increased over time, and now there are nearly 1 million new publications in the field each year, or more than one per minute.
+
+The large size and fast-changing nature of the medical literature has increased the need for reviews, which search databases like Pubmed for papers on a particular topic and then report results from the papers found. While such reviews are often performed manually, with multiple people reviewing each search result, this is tedious and time consuming. In this problem, we will see how text analytics can be used to automate the process of information retrieval.
+
+The dataset consists of the titles (variable _title_) and abstracts (variable _abstract_) of papers retrieved in a [Pubmed](http://www.ncbi.nlm.nih.gov/pubmed) search. Each search result is labeled with whether the paper is a clinical trial testing a drug therapy for cancer (variable _trial_). These labels were obtained by two people reviewing each search result and accessing the actual paper if necessary, as part of a literature review of clinical trials testing drug therapies for advanced and metastatic breast cancer.
+
+#### Problem 1.1 - Loading the Data
+
+(1 point possible)
+
+Load [clinical_trial.csv](https://d37djvu3ytnwxt.cloudfront.net/asset-v1:MITx+15.071x_3+1T2016+type@asset+block/clinical_trial.csv) into a data frame called trials (remembering to add the argument stringsAsFactors=FALSE).
+
+```r
+trials <- read.csv("/Users/johnbobo/analytics_edge/data/clinical_trial.csv",
+                   stringsAsFactors = FALSE)
+```
+
+We can use R's string functions to learn more about the titles and abstracts of the located papers. The nchar() function counts the number of characters in a piece of text. Using the nchar() function on the variables in the data frame, answer the following questions:
+
+*How many characters are there in the longest abstract? (Longest here is defined as the abstract with the largest number of characters.)*  
+
+```r
+answer <- max(nchar(trials$abstract))
+```
+**Answer:** 3708
+
+***
+
+#### Problem 1.2 - Loading the Data
+
+(1 point possible)
+*How many search results provided no abstract?*  
+
+```r
+answer <- sum(nchar(trials$abstract) == 0)
+```
+**Answer:** 112
+
+***
+
+#### Problem 1.3 - Loading the Data
+
+(1 point possible)
+Find the observation with the minimum number of characters in the title (the variable "title") out of all of the observations in this dataset. What is the text of the title of this article? Include capitalization and punctuation in your response, but don't include the quotes.
+
+```r
+answer <- trials$title[which.min(nchar(trials$title))]
+```
+**Answer:** A decade of letrozole: FACE.
+
+***
+
+#### 
+
