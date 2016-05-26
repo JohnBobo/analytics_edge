@@ -376,4 +376,59 @@ table(test$Vandal, predTest)
 ```
 **Answer:** 0.655
 
+
 ***
+
+#### Problem 3.1 - Using Non-Textual Data
+
+(2 points possible)
+We have two pieces of "metadata" (data about data) that we haven't yet used. Make a copy of wikiWords2, and call it wikiWords3:
+
+```r
+wikiWords3 <- wikiWords2
+```
+Then add the two original variables Minor and Loggedin to this new data frame:
+
+```r
+wikiWords3$Minor <- wiki$Minor
+wikiWords3$Loggedin <- wiki$Loggedin
+```
+In problem 1.5, you computed a vector called "spl" that identified the observations to put in the training and testing sets. Use that variable (do not recompute it with sample.split) to make new training and testing sets with wikiWords3.
+
+```r
+train <- subset(wikiWords3, spl == TRUE)
+test <- subset(wikiWords3, spl == FALSE)
+```
+
+Build a CART model using all the training data.
+
+```r
+cart <- rpart(Vandal ~ ., data=train, method='class')
+predTest <- predict(cart, newdata=test, type='class')
+prp(cart)
+```
+
+![](detecting_vandalism_on_wikipedia_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+
+*What is the new accuracy of the CART model on the test set?*
+
+```r
+table(test$Vandal, predTest)
+```
+
+```
+##    predTest
+##       0   1
+##   0 595  23
+##   1 304 241
+```
+**Answer:** 0.719
+
+***
+
+#### Problem 3.2 - Using Non-Textual Data
+
+(1 point possible)
+There is a substantial difference in the accuracy of the model using the meta data. Is this because we made a more complicated model? *How many splits are there in the tree?*  
+
+**Answer:** There are three splits.  Adding the metadata significantly imporved the accuracy of our model without making it more complicated.
