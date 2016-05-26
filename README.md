@@ -26,6 +26,6 @@ This repo contains work I did while following the [Analytics Edge MOOC](https://
 * [Predicted Earnings From Census Data](https://github.com/JohnBobo/analytics_edge/tree/master/predicting_earnings_from_census_data)
 
 #### Text Analytics
-* [Detecting Vandalism on Wikipedia]
+* [Detecting Vandalism on Wikipedia](https://github.com/JohnBobo/analytics_edge/tree/master/detecting_vandalism_on_wikipedia)
 * [Automating Reviews in Medicine]
 * [Separating Spam from Ham]
