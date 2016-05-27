@@ -96,3 +96,122 @@ answer <- which.min(nchar(emails$text))
 **Answer:** `r answer`
 
 ***
+
+#### Problem 2.1 - Preparing the Corpus
+
+(2 points possible)
+Follow the standard steps to build and pre-process the corpus:
+
+1) Build a new corpus variable called corpus.
+
+2) Using tm_map, convert the text to lowercase.
+
+3) Using tm_map, remove all punctuation from the corpus.
+
+4) Using tm_map, remove all English stopwords from the corpus.
+
+5) Using tm_map, stem the words in the corpus.
+
+6) Build a document term matrix from the corpus, called dtm.
+
+```{r}
+library(tm)
+
+vectorToDTM <-function(data){
+    corpus = Corpus(VectorSource(data))
+    corpus = tm_map(corpus, content_transformer(tolower))
+    corpus = tm_map(corpus, PlainTextDocument)
+    corpus = tm_map(corpus, removePunctuation)
+    corpus = tm_map(corpus, removeWords, stopwords('english'))
+    corpus = tm_map(corpus, stemDocument)
+    
+    dtm = DocumentTermMatrix(corpus)
+    return(dtm)
+}
+
+dtm <- vectorToDTM(emails$text)
+dtm
+```
+
+*How many terms are in dtm?*  
+
+**Answer:** `r dtm$ncol`
+
+***
+
+#### Problem 2.2 - Preparing the Corpus
+
+(1 point possible)
+To obtain a more reasonable number of terms, limit dtm to contain terms appearing in at least 5% of documents, and store this result as spdtm (don't overwrite dtm, because we will use it in a later step of this homework).
+```{r}
+spdtm <- removeSparseTerms(dtm, .95)
+spdtm
+```
+*How many terms are in spdtm?*
+**Answer:** `r spdtm$ncol`
+
+***
+
+#### Problem 2.3 - Preparing the Corpus
+
+(2 points possible)
+Build a data frame called emailsSparse from spdtm, and use the make.names function to make the variable names of emailsSparse valid.
+```{r}
+emailsSparse <- as.data.frame(as.matrix(spdtm))
+colnames(emailsSparse) <- make.names(colnames(emailsSparse))
+```
+
+colSums() is an R function that returns the sum of values for each variable in our data frame. Our data frame contains the number of times each word stem (columns) appeared in each email (rows). Therefore, colSums(emailsSparse) returns the number of times a word stem appeared across all the emails in the dataset. *What is the word stem that shows up most frequently across all the emails in the dataset?*
+```{r}
+answer <- names(which.max(colSums(emailsSparse)))
+```
+**Answer:** `r answer`
+
+***
+
+#### Problem 2.4 - Preparing the Corpus
+
+(1 point possible)
+Add a variable called "spam" to emailsSparse containing the email spam labels. You can do this by copying over the "spam" variable from the original data frame (remember how we did this in the Twitter lecture).
+```{r}
+emailsSparse$spam <- emails$spam
+```
+
+*How many word stems appear at least 5000 times in the ham emails in the dataset?*
+```{r}
+answer <- sum(colSums(subset(emailsSparse, spam == 0)) > 5000)
+```
+**Answer:** `r answer`
+
+***
+
+#### Problem 2.5 - Preparing the Corpus
+
+(1 point possible)
+*How many word stems appear at least 1000 times in the spam emails in the dataset?*
+remember not to count the dependent variable we just added.
+```{r}
+answer <- sum(colSums(subset(emailsSparse, spam == 1)) > 1000) - 
+                                                (sum(emailsSparse$spam) > 1000)
+```
+**Answer:** `r answer`
+
+***
+
+#### Problem 2.6 - Preparing the Corpus
+
+(1 point possible)
+The lists of most common words are significantly different between the spam and ham emails. *What does this likely imply?*  
+
+**Answer:** The frequencies of these most common words are likely to help differentiate between spam and ham.
+
+***
+
+#### Problem 2.7 - Preparing the Corpus
+
+(1 point possible)
+Several of the most common word stems from the ham documents, such as "enron", "hou" (short for Houston), "vinc" (the word stem of "Vince") and "kaminski", are likely specific to Vincent Kaminski's inbox. *What does this mean about the applicability of the text analytics models we will train for the spam filtering problem?*  
+
+**Answer:** The models we build are personalized, and would need to be further tested before being used as a spam filter for another person.
+
+***
