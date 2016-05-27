@@ -357,4 +357,29 @@ The decision maker for this problem, a researcher performing a review of the med
 
 3) Perform the study-specific analysis, using data extracted from the limited set of papers identified in step 2.
 
+***
 
+#### Problem 5.1 - Decision-Maker Tradeoffs
+
+(1 point possible)
+*What is the cost associated with the model in Step 1 making a false negative prediction?*  
+
+**Answer:** A paper that should have been included in Set A will be missed, affecting the quality of the results of Step 3. 
+
+***
+
+#### Problem 5.2 - Decision-Maker Tradeoffs
+
+(1 point possible)
+*What is the cost associated with the model in Step 1 making a false positive prediction?*  
+
+**Answer:**  A paper will be mistakenly added to Set A, yielding additional work in Step 2 of the process but not affecting the quality of the results of Step 3.
+
+***
+
+#### Problem 5.3 - Decision-Maker Tradeoffs
+
+(1 point possible)
+Given the costs associated with false positives and false negatives, which of the following is most accurate?
+
+**Answer:**  A false negative is more costly than a false positive; the decision maker should use a probability threshold less than 0.5 for the machine learning model. A false positive just means more work, a false negative affects the legitimacy of our work.
