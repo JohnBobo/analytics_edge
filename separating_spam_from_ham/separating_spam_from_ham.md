@@ -501,4 +501,120 @@ auc <- performance(predROCR, 'auc')@y.values
 
 ***
 
+#### Problem 4.1 - Evaluating on the Test Set
 
+(1 point possible)
+Obtain predicted probabilities for the testing set for each of the models, again ensuring that probabilities instead of classes are obtained.
+
+```r
+predTestLog <- predict(spamLog, newdata=test, type='response')
+predTestCART <- predict(spamCART, newdata=test)[,2]
+predTestRF <- predict(spamRF, newdata=test, type='prob')[,2]
+```
+
+*What is the testing set accuracy of spamLog, using a threshold of 0.5 for predictions?*
+
+```r
+table(test$spam, predTestLog >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  1257   51
+##   1    34  376
+```
+**Answer:** 0.951
+
+***
+
+#### Problem 4.2 - Evaluating on the Test Set
+
+(1 point possible)
+*What is the testing set AUC of spamLog?*
+
+```r
+predROCR <- prediction(predTestLog, test$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 0.963
+
+***
+
+#### Problem 4.3 - Evaluating on the Test Set
+
+(1 point possible)
+*What is the testing set accuracy of spamCART, using a threshold of 0.5 for predictions?*
+
+```r
+table(test$spam, predTestCART >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  1228   80
+##   1    24  386
+```
+**Answer:** 0.939
+
+***
+
+#### Problem 4.4 - Evaluating on the Test Set
+
+(1 point possible)
+*What is the testing set AUC of spamCART?*
+
+```r
+predROCR <- prediction(predTestCART, test$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 0.963
+
+***
+
+#### Problem 4.5 - Evaluating on the Test Set
+
+(1 point possible)
+*What is the testing set accuracy of spamRF, using a threshold of 0.5 for predictions?*
+
+```r
+table(test$spam, predTestRF >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  1290   18
+##   1    24  386
+```
+**Answer:** 0.976
+
+***
+
+#### Problem 4.6 - Evaluating on the Test Set
+
+(1 point possible)
+*What is the testing set AUC of spamRF?*
+
+```r
+predROCR <- prediction(predTestRF, test$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 0.998
+
+***
+
+#### Problem 4.7 - Evaluating on the Test Set
+
+(1 point possible)
+*Which model had the best testing set performance, in terms of accuracy and AUC?*
+
+**Answer:** The random forest model.
+
+#### Problem 4.8 - Evaluating on the Test Set
+
+(1 point possible)
+*Which model demonstrated the greatest degree of overfitting?*  
+
+**Answer:** The logistic regression model.  It had the highest accuracy and auc on the training set and the lowest on the test set.

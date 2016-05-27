@@ -403,6 +403,77 @@ auc &lt;- performance(predROCR, 'auc')@y.values</code></pre>
 <p><strong>Answer:</strong> Logistic Regression.</p>
 <hr />
 </div>
+<div id="problem-4.1---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.1 - Evaluating on the Test Set</h4>
+<p>(1 point possible) Obtain predicted probabilities for the testing set for each of the models, again ensuring that probabilities instead of classes are obtained.</p>
+<pre class="r"><code>predTestLog &lt;- predict(spamLog, newdata=test, type='response')
+predTestCART &lt;- predict(spamCART, newdata=test)[,2]
+predTestRF &lt;- predict(spamRF, newdata=test, type='prob')[,2]</code></pre>
+<p><em>What is the testing set accuracy of spamLog, using a threshold of 0.5 for predictions?</em></p>
+<pre class="r"><code>table(test$spam, predTestLog &gt;= 0.5)</code></pre>
+<pre><code>##    
+##     FALSE TRUE
+##   0  1257   51
+##   1    34  376</code></pre>
+<p><strong>Answer:</strong> 0.951</p>
+<hr />
+</div>
+<div id="problem-4.2---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.2 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>What is the testing set AUC of spamLog?</em></p>
+<pre class="r"><code>predROCR &lt;- prediction(predTestLog, test$spam)
+auc &lt;- performance(predROCR, 'auc')@y.values</code></pre>
+<p><strong>Answer:</strong> 0.963</p>
+<hr />
+</div>
+<div id="problem-4.3---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.3 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>What is the testing set accuracy of spamCART, using a threshold of 0.5 for predictions?</em></p>
+<pre class="r"><code>table(test$spam, predTestCART &gt;= 0.5)</code></pre>
+<pre><code>##    
+##     FALSE TRUE
+##   0  1228   80
+##   1    24  386</code></pre>
+<p><strong>Answer:</strong> 0.939</p>
+<hr />
+</div>
+<div id="problem-4.4---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.4 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>What is the testing set AUC of spamCART?</em></p>
+<pre class="r"><code>predROCR &lt;- prediction(predTestCART, test$spam)
+auc &lt;- performance(predROCR, 'auc')@y.values</code></pre>
+<p><strong>Answer:</strong> 0.963</p>
+<hr />
+</div>
+<div id="problem-4.5---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.5 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>What is the testing set accuracy of spamRF, using a threshold of 0.5 for predictions?</em></p>
+<pre class="r"><code>table(test$spam, predTestRF &gt;= 0.5)</code></pre>
+<pre><code>##    
+##     FALSE TRUE
+##   0  1290   18
+##   1    24  386</code></pre>
+<p><strong>Answer:</strong> 0.976</p>
+<hr />
+</div>
+<div id="problem-4.6---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.6 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>What is the testing set AUC of spamRF?</em></p>
+<pre class="r"><code>predROCR &lt;- prediction(predTestRF, test$spam)
+auc &lt;- performance(predROCR, 'auc')@y.values</code></pre>
+<p><strong>Answer:</strong> 0.998</p>
+<hr />
+</div>
+<div id="problem-4.7---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.7 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>Which model had the best testing set performance, in terms of accuracy and AUC?</em></p>
+<p><strong>Answer:</strong> The random forest model.</p>
+</div>
+<div id="problem-4.8---evaluating-on-the-test-set" class="section level4">
+<h4>Problem 4.8 - Evaluating on the Test Set</h4>
+<p>(1 point possible) <em>Which model demonstrated the greatest degree of overfitting?</em></p>
+<p><strong>Answer:</strong> The logistic regression model. It had the highest accuracy and auc on the training set and the lowest on the test set.</p>
+</div>
 
 
 
