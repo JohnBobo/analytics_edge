@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="By John Bobo based on a problem set from MIT’s Analytics Edge MOOC" />
+<meta name="author" content="Solutions by John Bobo based on a problem set from MIT’s Analytics Edge MOOC" />
 
 <meta name="date" content="2016-05-26" />
 
@@ -117,7 +117,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">AUTOMATING REVIEWS IN MEDICINE</h1>
-<h4 class="author"><em>By John Bobo based on a problem set from MIT’s Analytics Edge MOOC</em></h4>
+<h4 class="author"><em>Solutions by John Bobo based on a problem set from MIT’s Analytics Edge MOOC</em></h4>
 <h4 class="date"><em>May 26, 2016</em></h4>
 
 </div>
@@ -126,6 +126,7 @@ $(document).ready(function () {
 <p>The medical literature is enormous. Pubmed, a database of medical publications maintained by the U.S. National Library of Medicine, has indexed over 23 million medical publications. Further, the rate of medical publication has increased over time, and now there are nearly 1 million new publications in the field each year, or more than one per minute.</p>
 <p>The large size and fast-changing nature of the medical literature has increased the need for reviews, which search databases like Pubmed for papers on a particular topic and then report results from the papers found. While such reviews are often performed manually, with multiple people reviewing each search result, this is tedious and time consuming. In this problem, we will see how text analytics can be used to automate the process of information retrieval.</p>
 <p>The dataset consists of the titles (variable <em>title</em>) and abstracts (variable <em>abstract</em>) of papers retrieved in a <a href="http://www.ncbi.nlm.nih.gov/pubmed">Pubmed</a> search. Each search result is labeled with whether the paper is a clinical trial testing a drug therapy for cancer (variable <em>trial</em>). These labels were obtained by two people reviewing each search result and accessing the actual paper if necessary, as part of a literature review of clinical trials testing drug therapies for advanced and metastatic breast cancer.</p>
+<hr />
 <div id="problem-1.1---loading-the-data" class="section level4">
 <h4>Problem 1.1 - Loading the Data</h4>
 <p>(1 point possible)</p>
@@ -152,8 +153,61 @@ $(document).ready(function () {
 <p><strong>Answer:</strong> A decade of letrozole: FACE.</p>
 <hr />
 </div>
-<div id="section" class="section level4">
-<h4></h4>
+<div id="problem-2.1---preparing-the-corpus" class="section level4">
+<h4>Problem 2.1 - Preparing the Corpus</h4>
+<p>(4 points possible) Because we have both title and abstract information for trials, we need to build two corpera instead of one. Name them corpusTitle and corpusAbstract.</p>
+<p>Following the commands from lecture, perform the following tasks (you might need to load the “tm” package first if it isn’t already loaded). Make sure to perform them in this order.</p>
+<ol style="list-style-type: decimal">
+<li><p>Convert the title variable to corpusTitle and the abstract variable to corpusAbstract.</p></li>
+<li><p>Convert corpusTitle and corpusAbstract to lowercase. After performing this step, remember to run the lines:</p></li>
+</ol>
+<p><code>corpusTitle = tm_map(corpusTitle, PlainTextDocument)</code></p>
+<p><code>corpusAbstract = tm_map(corpusAbstract, PlainTextDocument)</code></p>
+<ol start="3" style="list-style-type: decimal">
+<li><p>Remove the punctuation in corpusTitle and corpusAbstract.</p></li>
+<li><p>Remove the English language stop words from corpusTitle and corpusAbstract.</p></li>
+<li><p>Stem the words in corpusTitle and corpusAbstract (each stemming might take a few minutes).</p></li>
+<li><p>Build a document term matrix called dtmTitle from corpusTitle and dtmAbstract from corpusAbstract.</p></li>
+<li><p>Limit dtmTitle and dtmAbstract to terms with sparseness of at most 95% (aka terms that appear in at least 5% of documents).</p></li>
+<li><p>Convert dtmTitle and dtmAbstract to data frames (keep the names dtmTitle and dtmAbstract).</p></li>
+</ol>
+<pre class="r"><code>library(tm)</code></pre>
+<pre><code>## Loading required package: NLP</code></pre>
+<pre class="r"><code>vectorToDTM &lt;-function(data, sparse){
+    corpus = Corpus(VectorSource(data))
+    corpus = tm_map(corpus, content_transformer(tolower))
+    corpus = tm_map(corpus, PlainTextDocument)
+    corpus = tm_map(corpus, removePunctuation)
+    corpus = tm_map(corpus, removeWords, stopwords('english'))
+    corpus = tm_map(corpus, stemDocument)
+    
+    dtm = DocumentTermMatrix(corpus)
+    dtmSparse = removeSparseTerms(dtm, sparse)
+    df = as.data.frame(as.matrix(dtmSparse))
+    return(df)
+}
+dtmTitle &lt;- vectorToDTM(trials$title, .95)
+dtmAbstract &lt;- vectorToDTM(trials$abstract, .95)</code></pre>
+<p><em>How many terms remain in <code>dtmTitle</code> after removing sparse terms (aka how many columns does it have)?</em></p>
+<p><strong>Answer:</strong> 31</p>
+<p><em>How many terms remain in <code>dtmAbstract</code>?</em></p>
+<p><strong>Answer:</strong> 335</p>
+<hr />
+</div>
+<div id="problem-2.2---preparing-the-corpus" class="section level4">
+<h4>Problem 2.2 - Preparing the Corpus</h4>
+<p>(1 point possible) <em>What is the most likely reason why dtmAbstract has so many more terms than dtmTitle?</em></p>
+<p><strong>Answer:</strong> Abstracts tend to have many more words than titles.</p>
+<hr />
+</div>
+<div id="problem-2.3---preparing-the-corpus" class="section level4">
+<h4>Problem 2.3 - Preparing the Corpus</h4>
+<p>(1 point possible) <em>What is the most frequent word stem across all the abstracts?</em></p>
+<pre class="r"><code>sort(colSums(dtmAbstract), decreasing = TRUE)[1]</code></pre>
+<pre><code>## patient 
+##    8381</code></pre>
+<p><strong>Answer:</strong> patient. This shouldn’t be too surprising.</p>
+<hr />
 </div>
 
 
