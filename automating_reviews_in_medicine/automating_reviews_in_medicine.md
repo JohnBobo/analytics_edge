@@ -147,4 +147,150 @@ sort(colSums(dtmAbstract), decreasing = TRUE)[1]
 
 ***
 
+#### Problem 3.1 - Building a model
+
+(1 point possible)
+We want to combine dtmTitle and dtmAbstract into a single data frame to make predictions. However, some of the variables in these data frames have the same names. To fix this issue, run the following commands:
+
+```r
+colnames(dtmTitle) = paste0("T", colnames(dtmTitle))
+colnames(dtmAbstract) = paste0("A", colnames(dtmAbstract))
+```
+*What was the effect of these functions?*  
+
+**Answer:**  Adding the letter T in front of all the title variable names and adding the letter A in front of all the abstract variable names. 
+
+***
+
+#### Problem 3.2 - Building a Model
+
+(1 point possible)
+Using cbind(), combine dtmTitle and dtmAbstract into a single data frame called dtm.
+
+```r
+dtm <- cbind(dtmTitle, dtmAbstract, row.names = NULL)
+```
+As we did in class, add the dependent variable "trial" to dtm, copying it from the original data frame called trials. 
+
+```r
+dtm$trial <- trials$trial
+```
+
+*How many columns are in this combined data frame?*  
+
+**Answer:** 367
+
+***
+
+#### Problem 3.3 - Building a Model
+
+(1 point possible)
+Now that we have prepared our data frame, it's time to split it into a training and testing set and to build regression models. Set the random seed to 144 and use the sample.split function from the caTools package to split dtm into data frames named "train" and "test", putting 70% of the data in the training set.
+
+```r
+library(caTools)
+set.seed(144)
+
+spl <- sample.split(dtm$trial, SplitRatio = 0.7)
+train <- subset(dtm, spl == TRUE)
+test <- subset(dtm, spl == FALSE)
+```
+
+*What is the accuracy of the baseline model on the training set?*
+
+```r
+table(train$trial)
+```
+
+```
+## 
+##   0   1 
+## 730 572
+```
+**Answer:** 0.561
+
+***
+
+#### Problem 3.4 - Building a Model
+
+(2 points possible)
+Build a CART model called trialCART, using all the independent variables in the training set to train the model, and then plot the CART model. Just use the default parameters to build the model (don't add a minbucket or cp value). Remember to add the method="class" argument, since this is a classification problem.
+
+```r
+library(rpart)
+library(rpart.plot)
+
+trialCART <- rpart(trial ~ ., data=train, method='class')
+prp(trialCART)
+```
+
+![](automating_reviews_in_medicine_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+*What is the name of the first variable the model split on?*  
+
+**Answer:** `Tphase`.
+
+***
+
+#### Problem 3.5 - Building a Model
+
+(1 point possible)
+Obtain the training set predictions for the model (do not yet predict on the test set). Extract the predicted probability of a result being a trial (recall that this involves not setting a type argument, and keeping only the second column of the predict output). 
+
+```r
+predTrain <- predict(trialCART)
+pred.prob <- predTrain[,2]
+```
+
+*What is the maximum predicted probability for any result?*
+
+```r
+answer <- max(pred.prob)
+```
+**Answer:** 0.872
+
+***
+
+#### Problem 3.6 - Building a Model
+
+(1 point possible)
+Without running the analysis, *how do you expect the maximum predicted probability to differ in the testing set?*  
+
+**Answer:**  The maximum predicted probability will likely be exactly the same in the testing set. Because the CART tree assigns the same predicted probability to each leaf node and there are a small number of leaf nodes compared to data points, we expect exactly the same maximum predicted probability.
+
+***
+
+#### Problem 3.7 - Building a Model
+
+(3 points possible)
+For these questions, use a threshold probability of 0.5 to predict that an observation is a clinical trial.
+
+*What is the training set accuracy of the CART model?*
+
+```r
+table(train$trial, pred.prob >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0   631   99
+##   1   131  441
+```
+**Answer:** 0.823
+
+
+*What is the training set sensitivity of the CART model?*
+
+**Answer:** 0.771 
+
+
+*What is the training set specificity of the CART model?*
+
+**Answer:** 0.864
+
+***
+
+
+
 
