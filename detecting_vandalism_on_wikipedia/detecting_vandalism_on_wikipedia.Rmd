@@ -344,4 +344,4 @@ table(test$Vandal, predTest)
 (1 point possible)
 There is a substantial difference in the accuracy of the model using the meta data. Is this because we made a more complicated model? *How many splits are there in the tree?*  
 
-**Answer:** There are three splits.  Adding the metadata significantly imporved the accuracy of our model without making it more complicated.
+**Answer:** There are three splits.  Adding the metadata significantly improved the accuracy of our model without making it more complicated.
