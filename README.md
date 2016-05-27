@@ -27,5 +27,5 @@ This repo contains work I did while following the [Analytics Edge MOOC](https://
 
 #### Text Analytics
 * [Detecting Vandalism on Wikipedia](https://github.com/JohnBobo/analytics_edge/tree/master/detecting_vandalism_on_wikipedia)
-* [Automating Reviews in Medicine]
+* [Automating Reviews in Medicine](https://github.com/JohnBobo/analytics_edge/tree/master/automating_reviews_in_medicine)
 * [Separating Spam from Ham]
