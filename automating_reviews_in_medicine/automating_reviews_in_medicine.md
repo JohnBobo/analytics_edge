@@ -291,6 +291,70 @@ table(train$trial, pred.prob >= 0.5)
 
 ***
 
+#### Problem 4.1 - Evaluating the model on the testing set
 
+(2 points possible)
+Evaluate the CART model on the testing set using the predict function and creating a vector of predicted probabilities predTest.
+
+```r
+predTest.prob <- predict(trialCART, newdata=test)[,2]
+```
+
+*What is the testing set accuracy, assuming a probability threshold of 0.5 for predicting that a result is a clinical trial?*
+
+```r
+table(test$trial, predTest.prob >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0   261   52
+##   1    83  162
+```
+**Answer:** 0.758
+
+***
+
+#### Problem 4.2 - Evaluating the Model on the Testing Set
+
+(2 points possible)
+Using the ROCR package, what is the testing set AUC of the prediction model?
+
+```r
+library(ROCR)
+```
+
+```
+## Loading required package: gplots
+```
+
+```
+## 
+## Attaching package: 'gplots'
+```
+
+```
+## The following object is masked from 'package:stats':
+## 
+##     lowess
+```
+
+```r
+rocr_pred <- prediction(predTest.prob, test$trial)
+
+auc <- performance(rocr_pred, "auc")@y.values
+```
+**Answer:** 0.837
+
+### PART 5: DECISION-MAKER TRADEOFFS
+
+The decision maker for this problem, a researcher performing a review of the medical literature, would use a model (like the CART one we built here) in the following workflow:
+
+1) For all of the papers retreived in the PubMed Search, predict which papers are clinical trials using the model. This yields some initial Set A of papers predicted to be trials, and some Set B of papers predicted not to be trials. (See the figure below.)
+
+2) Then, the decision maker manually reviews all papers in Set A, verifying that each paper meets the study's detailed inclusion criteria (for the purposes of this analysis, we assume this manual review is 100% accurate at identifying whether a paper in Set A is relevant to the study). This yields a more limited set of papers to be included in the study, which would ideally be all papers in the medical literature meeting the detailed inclusion criteria for the study.
+
+3) Perform the study-specific analysis, using data extracted from the limited set of papers identified in step 2.
 
 
