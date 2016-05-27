@@ -245,3 +245,260 @@ Several of the most common word stems from the ham documents, such as "enron", "
 **Answer:** The models we build are personalized, and would need to be further tested before being used as a spam filter for another person.
 
 ***
+
+#### Problem 3.1 - Building machine learning models
+
+(3 points possible)
+First, convert the dependent variable to a factor with "emailsSparse$spam = as.factor(emailsSparse$spam)".
+
+```r
+emailsSparse$spam <- as.factor(emailsSparse$spam)
+```
+
+Next, set the random seed to 123 and use the sample.split function to split emailsSparse 70/30 into a training set called "train" and a testing set called "test". Make sure to perform this step on emailsSparse instead of emails.
+
+```r
+library(caTools)
+set.seed(123)
+
+spl <- sample.split(emailsSparse$spam, SplitRatio = 0.7)
+train <- subset(emailsSparse, spl == TRUE)
+test <- subset(emailsSparse, spl == FALSE)
+```
+
+Using the training set, train the following three machine learning models. The models should predict the dependent variable "spam", using all other available variables as independent variables. Please be patient, as these models may take a few minutes to train.
+
+1) A logistic regression model called spamLog. You may see a warning message here - we'll discuss this more later.
+
+```r
+spamLog <- glm(spam ~ ., data=train, family='binomial')
+```
+
+```
+## Warning: glm.fit: algorithm did not converge
+```
+
+```
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+```
+
+2) A CART model called spamCART, using the default parameters to train the model (don't worry about adding minbucket or cp). Remember to add the argument method="class" since this is a binary classification problem.
+
+```r
+library(rpart)
+library(rpart.plot)
+
+spamCART <- rpart(spam ~ ., data=train, method='class')
+```
+
+3) A random forest model called spamRF, using the default parameters to train the model (don't worry about specifying ntree or nodesize). Directly before training the random forest model, set the random seed to 123 (even though we've already done this earlier in the problem, it's important to set the seed right before training the model so we all obtain the same results. Keep in mind though that on certain operating systems, your results might still be slightly different).
+
+```r
+library(randomForest)
+```
+
+```
+## randomForest 4.6-12
+```
+
+```
+## Type rfNews() to see new features/changes/bug fixes.
+```
+
+```r
+set.seed(123)
+spamRF <- randomForest(spam ~ ., data=train)
+```
+
+For each model, obtain the predicted spam probabilities for the training set. Be careful to obtain probabilities instead of predicted classes, because we will be using these values to compute training set AUC values. Recall that you can obtain probabilities for CART models by not passing any type parameter to the predict() function, and you can obtain probabilities from a random forest by adding the argument type="prob". For CART and random forest, you need to select the second column of the output of the predict() function, corresponding to the probability of a message being spam.
+
+```r
+predTrainLog <- predict(spamLog, type='response')
+predTrainCART <- predict(spamCART)[,2]
+predTrainRF <- predict(spamRF, type='prob')[,2]
+```
+
+You may have noticed that training the logistic regression model yielded the messages "algorithm did not converge" and "fitted probabilities numerically 0 or 1 occurred". Both of these messages often indicate overfitting and the first indicates particularly severe overfitting, often to the point that the training set observations are fit perfectly by the model. Let's investigate the predicted probabilities from the logistic regression model.
+
+*How many of the training set predicted probabilities from spamLog are less than 0.00001?*
+
+
+```r
+low <- sum(predTrainLog < 0.00001)
+```
+**Answer:** 3046
+ 
+*How many of the training set predicted probabilities from spamLog are more than 0.99999?*
+
+```r
+high <- sum(predTrainLog > .99999)
+```
+
+**Answer:** 954
+
+
+*How many of the training set predicted probabilities from spamLog are between 0.00001 and 0.99999?*
+
+```r
+answer <- length(predTrainLog) - low - high
+```
+**Answer:** 10
+
+***
+
+#### Problem 3.2 - Building Machine Learning Models
+
+(1 point possible)
+*How many variables are labeled as significant (at the p=0.05 level) in the logistic regression summary output?*  
+
+```r
+summary(spamLog)
+```
+
+**Answer**: 0. This can be seen from the summary of spamLog (supressed due to length).
+
+***
+
+#### Problem 3.3 - Building Machine Learning Models
+
+(1 point possible)
+*How many of the word stems "enron", "hou", "vinc", and "kaminski" appear in the CART tree?* Recall that we suspect these word stems are specific to Vincent Kaminski and might affect the generalizability of a spam filter built with his ham data.
+
+```r
+prp(spamCART)
+```
+
+![](separating_spam_from_ham_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+**Answer:** 2
+
+***
+
+#### Problem 3.4 - Building Machine Learning Models
+
+(1 point possible)
+*What is the training set accuracy of spamLog, using a threshold of 0.5 for predictions?*
+
+```r
+table(train$spam, predTrainLog >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  3052    0
+##   1     4  954
+```
+**Answer:** 0.999
+
+#### Problem 3.5 - Building Machine Learning Models
+
+(1 point possible)
+*What is the training set AUC of spamLog?*  
+
+```r
+library(ROCR)
+```
+
+```
+## Loading required package: gplots
+```
+
+```
+## 
+## Attaching package: 'gplots'
+```
+
+```
+## The following object is masked from 'package:stats':
+## 
+##     lowess
+```
+
+```r
+predROCR <- prediction(predTrainLog, train$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 1
+
+***
+
+#### Problem 3.6 - Building Machine Learning Models
+
+(1 point possible)
+*What is the training set accuracy of spamCART, using a threshold of 0.5 for predictions?*
+
+```r
+table(train$spam, predTrainCART >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  2885  167
+##   1    64  894
+```
+**Answer:** 0.942
+
+***
+
+#### Problem 3.7 - Building Machine Learning Models
+
+(1 point possible)
+*What is the training set AUC of spamCART?* 
+
+```r
+library(ROCR)
+
+predROCR <- prediction(predTrainCART, train$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 0.97
+
+***
+
+#### Problem 3.8 - Building Machine Learning Models
+
+(1 point possible)
+*What is the training set accuracy of spamRF, using a threshold of 0.5 for predictions?*
+
+```r
+table(train$spam, predTrainRF >= 0.5)
+```
+
+```
+##    
+##     FALSE TRUE
+##   0  3013   39
+##   1    44  914
+```
+**Answer:** 0.979
+
+***
+
+#### Problem 3.9 - Building Machine Learning Models
+
+(2 points possible)
+*What is the training set AUC of spamRF?*
+
+
+```r
+library(ROCR)
+
+predROCR <- prediction(predTrainRF, train$spam)
+auc <- performance(predROCR, 'auc')@y.values
+```
+**Answer:** 0.998
+
+***
+
+#### Problem 3.10 - Building Machine Learning Models
+
+(1 point possible)
+*Which model had the best training set performance, in terms of accuracy and AUC?*
+
+**Answer:** Logistic Regression.
+
+***
+
+
